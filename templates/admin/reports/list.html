@@ -1,0 +1,597 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - BlackCobra Karate Club{% endblock %}
+
+{% block page_title %}Reports{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-3xl font-bold text-white">Reports Dashboard</h2>
+            <p class="text-gray-400 mt-1">Generate comprehensive reports and export data</p>
+        </div>
+    </div>
+
+    <!-- Quick Stats Overview -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-5 border border-blue-500/30">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-sm font-medium">Total Members</p>
+                    <p class="text-3xl font-bold text-white mt-1">{{ quick_stats.total_members }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-500/30 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl p-5 border border-green-500/30">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-sm font-medium">Active Members</p>
+                    <p class="text-3xl font-bold text-white mt-1">{{ quick_stats.active_members }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-500/30 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gradient-to-br from-purple-600 to-purple-700 rounded-2xl p-5 border border-purple-500/30">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100 text-sm font-medium">Total Revenue</p>
+                    <p class="text-3xl font-bold text-white mt-1">₱{{ quick_stats.total_revenue }}</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-500/30 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-purple-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gradient-to-br from-amber-600 to-amber-700 rounded-2xl p-5 border border-amber-500/30">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-amber-100 text-sm font-medium">Total Events</p>
+                    <p class="text-3xl font-bold text-white mt-1">{{ quick_stats.total_events }}</p>
+                </div>
+                <div class="w-12 h-12 bg-amber-500/30 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-amber-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Type Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Membership Report Card -->
+        <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden hover:border-blue-500/50 transition-colors group">
+            <div class="p-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-14 h-14 bg-blue-600/20 rounded-xl flex items-center justify-center group-hover:bg-blue-600/30 transition-colors">
+                        <svg class="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Membership Report</h3>
+                        <p class="text-gray-400 text-sm">Member statistics & belt distribution</p>
+                    </div>
+                </div>
+                <div class="space-y-3 mb-5">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Active Members</span>
+                        <span class="text-green-400 font-medium">{{ quick_stats.active_members }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Inactive Members</span>
+                        <span class="text-yellow-400 font-medium">{{ quick_stats.inactive_members }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Suspended</span>
+                        <span class="text-red-400 font-medium">{{ quick_stats.suspended_members }}</span>
+                    </div>
+                </div>
+                <button onclick="openReportModal('membership')" 
+                    class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Generate Report
+                </button>
+            </div>
+        </div>
+
+        <!-- Financial Report Card -->
+        <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden hover:border-green-500/50 transition-colors group">
+            <div class="p-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-14 h-14 bg-green-600/20 rounded-xl flex items-center justify-center group-hover:bg-green-600/30 transition-colors">
+                        <svg class="w-7 h-7 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Financial Report</h3>
+                        <p class="text-gray-400 text-sm">Revenue & payment analysis</p>
+                    </div>
+                </div>
+                <div class="space-y-3 mb-5">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Total Revenue</span>
+                        <span class="text-green-400 font-medium">₱{{ quick_stats.total_revenue }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Pending Payments</span>
+                        <span class="text-yellow-400 font-medium">₱{{ quick_stats.pending_payments }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Overdue</span>
+                        <span class="text-red-400 font-medium">₱{{ quick_stats.overdue_payments }}</span>
+                    </div>
+                </div>
+                <button onclick="openReportModal('financial')" 
+                    class="w-full py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Generate Report
+                </button>
+            </div>
+        </div>
+
+        <!-- Event Report Card -->
+        <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden hover:border-purple-500/50 transition-colors group">
+            <div class="p-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-14 h-14 bg-purple-600/20 rounded-xl flex items-center justify-center group-hover:bg-purple-600/30 transition-colors">
+                        <svg class="w-7 h-7 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Event Report</h3>
+                        <p class="text-gray-400 text-sm">Event participation & matches</p>
+                    </div>
+                </div>
+                <div class="space-y-3 mb-5">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Total Events</span>
+                        <span class="text-purple-400 font-medium">{{ quick_stats.total_events }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Total Matches</span>
+                        <span class="text-blue-400 font-medium">{{ quick_stats.total_matches }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Completed Matches</span>
+                        <span class="text-green-400 font-medium">{{ quick_stats.completed_matches }}</span>
+                    </div>
+                </div>
+                <button onclick="openReportModal('event')" 
+                    class="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Generate Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Preview Section -->
+    {% if report_data %}
+    <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
+        <!-- Report Header -->
+        <div class="px-6 py-4 border-b border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center
+                    {% if report_type == 'membership' %}bg-blue-600/20 text-blue-400
+                    {% elif report_type == 'financial' %}bg-green-600/20 text-green-400
+                    {% else %}bg-purple-600/20 text-purple-400{% endif %}">
+                    {% if report_type == 'membership' %}
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    {% elif report_type == 'financial' %}
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    {% else %}
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">
+                        {% if report_type == 'membership' %}Membership Report
+                        {% elif report_type == 'financial' %}Financial Report
+                        {% else %}Event Report: {{ report_data.event.name }}{% endif %}
+                    </h3>
+                    <p class="text-sm text-gray-400">
+                        {% if report_type != 'event' %}
+                        Period: {{ report_data.start_date }} to {{ report_data.end_date }}
+                        {% else %}
+                        {{ report_data.event.event_date }} - {{ report_data.event.location }}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <a href="{% url 'admin_reports_export' %}?report_type={{ report_type }}&format=pdf{% if report_type != 'event' %}&start_date={{ report_data.start_date }}&end_date={{ report_data.end_date }}{% else %}&event_id={{ report_data.event.id }}{% endif %}"
+                   class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-500 rounded-xl transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    PDF
+                </a>
+                <a href="{% url 'admin_reports_export' %}?report_type={{ report_type }}&format=csv{% if report_type != 'event' %}&start_date={{ report_data.start_date }}&end_date={{ report_data.end_date }}{% else %}&event_id={{ report_data.event.id }}{% endif %}"
+                   class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-500 rounded-xl transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    CSV
+                </a>
+            </div>
+        </div>
+
+        <!-- Report Content -->
+        <div class="p-6">
+            {% if report_type == 'membership' %}
+            <!-- Membership Report Content -->
+            <div class="space-y-6">
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div class="bg-gray-700/50 rounded-xl p-4 text-center border border-gray-600">
+                        <p class="text-2xl font-bold text-blue-400">{{ report_data.total_members }}</p>
+                        <p class="text-sm text-gray-400">Total Members</p>
+                    </div>
+                    <div class="bg-gray-700/50 rounded-xl p-4 text-center border border-gray-600">
+                        <p class="text-2xl font-bold text-green-400">{{ report_data.active_members }}</p>
+                        <p class="text-sm text-gray-400">Active</p>
+                    </div>
+                    <div class="bg-gray-700/50 rounded-xl p-4 text-center border border-gray-600">
+                        <p class="text-2xl font-bold text-yellow-400">{{ report_data.inactive_members }}</p>
+                        <p class="text-sm text-gray-400">Inactive</p>
+                    </div>
+                    <div class="bg-gray-700/50 rounded-xl p-4 text-center border border-gray-600">
+                        <p class="text-2xl font-bold text-red-400">{{ report_data.suspended_members }}</p>
+                        <p class="text-sm text-gray-400">Suspended</p>
+                    </div>
+                    <div class="bg-gray-700/50 rounded-xl p-4 text-center border border-gray-600">
+                        <p class="text-2xl font-bold text-purple-400">{{ report_data.new_members }}</p>
+                        <p class="text-sm text-gray-400">New (Period)</p>
+                    </div>
+                </div>
+                
+                <!-- Belt Rank Breakdown -->
+                {% if report_data.belt_rank_details %}
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-4">Members by Belt Rank</h4>
+                    <div class="space-y-4">
+                        {% for belt_rank, members in report_data.belt_rank_details.items %}
+                        <div class="bg-gray-700/30 rounded-xl border border-gray-600 overflow-hidden">
+                            <div class="px-5 py-3 border-b border-gray-600 flex items-center justify-between bg-gray-700/50">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-3 h-3 rounded-full
+                                        {% if belt_rank == 'white' %}bg-gray-100
+                                        {% elif belt_rank == 'yellow' %}bg-yellow-400
+                                        {% elif belt_rank == 'orange' %}bg-orange-400
+                                        {% elif belt_rank == 'green' %}bg-green-500
+                                        {% elif belt_rank == 'blue' %}bg-blue-500
+                                        {% elif belt_rank == 'brown' %}bg-amber-700
+                                        {% elif belt_rank == 'black' %}bg-gray-900 border border-gray-400
+                                        {% else %}bg-purple-500{% endif %}"></span>
+                                    <span class="text-white font-medium">{{ belt_rank|title }}</span>
+                                </div>
+                                <span class="text-sm text-gray-400 bg-gray-600 px-2 py-0.5 rounded-full">{{ members|length }} members</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-700/30">
+                                        <tr class="text-xs text-gray-400 uppercase">
+                                            <th class="px-5 py-3 text-left">Name</th>
+                                            <th class="px-5 py-3 text-center">Status</th>
+                                            <th class="px-5 py-3 text-left">Weight Class</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-700/50">
+                                        {% for member in members %}
+                                        <tr class="hover:bg-gray-700/30 transition-colors">
+                                            <td class="px-5 py-3 text-sm text-white">{{ member.name }}</td>
+                                            <td class="px-5 py-3 text-center">
+                                                <span class="px-2 py-1 rounded-full text-xs font-medium
+                                                    {% if member.status == 'active' %}bg-green-500/20 text-green-400
+                                                    {% elif member.status == 'inactive' %}bg-gray-500/20 text-gray-400
+                                                    {% else %}bg-red-500/20 text-red-400{% endif %}">
+                                                    {{ member.status|title }}
+                                                </span>
+                                            </td>
+                                            <td class="px-5 py-3 text-sm text-gray-400">{{ member.weight_class }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if report_type == 'financial' %}
+            <!-- Financial Report Content -->
+            <div class="space-y-6">
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-green-900/30 rounded-xl p-5 text-center border border-green-700/50">
+                        <p class="text-3xl font-bold text-green-400">₱{{ report_data.total_revenue }}</p>
+                        <p class="text-sm text-green-300/70 mt-1">Total Revenue</p>
+                    </div>
+                    <div class="bg-yellow-900/30 rounded-xl p-5 text-center border border-yellow-700/50">
+                        <p class="text-3xl font-bold text-yellow-400">₱{{ report_data.pending_amount }}</p>
+                        <p class="text-sm text-yellow-300/70 mt-1">Pending</p>
+                    </div>
+                    <div class="bg-red-900/30 rounded-xl p-5 text-center border border-red-700/50">
+                        <p class="text-3xl font-bold text-red-400">₱{{ report_data.overdue_amount }}</p>
+                        <p class="text-sm text-red-300/70 mt-1">Overdue</p>
+                    </div>
+                </div>
+                
+                <!-- Revenue by Type -->
+                {% if report_data.payments_by_type %}
+                <div class="bg-gray-700/30 rounded-xl border border-gray-600 overflow-hidden">
+                    <div class="px-5 py-3 border-b border-gray-600 bg-gray-700/50">
+                        <h4 class="text-white font-medium">Revenue by Payment Type</h4>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-700/30">
+                                <tr class="text-xs text-gray-400 uppercase">
+                                    <th class="px-5 py-3 text-left">Payment Type</th>
+                                    <th class="px-5 py-3 text-center">Count</th>
+                                    <th class="px-5 py-3 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-700/50">
+                                {% for item in report_data.payments_by_type %}
+                                <tr class="hover:bg-gray-700/30 transition-colors">
+                                    <td class="px-5 py-3 text-sm text-white">{{ item.payment_type|title }}</td>
+                                    <td class="px-5 py-3 text-sm text-gray-400 text-center">{{ item.count }}</td>
+                                    <td class="px-5 py-3 text-sm text-green-400 text-right font-medium">₱{{ item.total }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Outstanding Balances -->
+                {% if report_data.outstanding_balances %}
+                <div class="bg-gray-700/30 rounded-xl border border-gray-600 overflow-hidden">
+                    <div class="px-5 py-3 border-b border-gray-600 bg-gray-700/50">
+                        <h4 class="text-white font-medium">Outstanding Balances</h4>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-700/30">
+                                <tr class="text-xs text-gray-400 uppercase">
+                                    <th class="px-5 py-3 text-left">Trainee</th>
+                                    <th class="px-5 py-3 text-right">Outstanding Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-700/50">
+                                {% for item in report_data.outstanding_balances %}
+                                <tr class="hover:bg-gray-700/30 transition-colors">
+                                    <td class="px-5 py-3 text-sm text-white">
+                                        {{ item.trainee__profile__user__first_name }} {{ item.trainee__profile__user__last_name }}
+                                    </td>
+                                    <td class="px-5 py-3 text-sm text-red-400 text-right font-medium">₱{{ item.total_outstanding }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if report_type == 'event' %}
+            <!-- Event Report Content -->
+            <div class="space-y-6">
+                <!-- Event Info -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600">
+                        <p class="text-sm text-gray-400">Date</p>
+                        <p class="text-white font-medium mt-1">{{ report_data.event.event_date }}</p>
+                    </div>
+                    <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600">
+                        <p class="text-sm text-gray-400">Location</p>
+                        <p class="text-white font-medium mt-1">{{ report_data.event.location }}</p>
+                    </div>
+                    <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600">
+                        <p class="text-sm text-gray-400">Status</p>
+                        <p class="text-white font-medium mt-1">{{ report_data.event.status|title }}</p>
+                    </div>
+                    <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600">
+                        <p class="text-sm text-gray-400">Max Participants</p>
+                        <p class="text-white font-medium mt-1">{{ report_data.event.max_participants }}</p>
+                    </div>
+                </div>
+                
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-blue-900/30 rounded-xl p-4 text-center border border-blue-700/50">
+                        <p class="text-2xl font-bold text-blue-400">{{ report_data.total_registrations }}</p>
+                        <p class="text-sm text-blue-300/70">Registrations</p>
+                    </div>
+                    <div class="bg-purple-900/30 rounded-xl p-4 text-center border border-purple-700/50">
+                        <p class="text-2xl font-bold text-purple-400">{{ report_data.matches_summary.total }}</p>
+                        <p class="text-sm text-purple-300/70">Total Matches</p>
+                    </div>
+                    <div class="bg-green-900/30 rounded-xl p-4 text-center border border-green-700/50">
+                        <p class="text-2xl font-bold text-green-400">{{ report_data.matches_summary.completed }}</p>
+                        <p class="text-sm text-green-300/70">Completed</p>
+                    </div>
+                    <div class="bg-yellow-900/30 rounded-xl p-4 text-center border border-yellow-700/50">
+                        <p class="text-2xl font-bold text-yellow-400">{{ report_data.matches_summary.scheduled }}</p>
+                        <p class="text-sm text-yellow-300/70">Scheduled</p>
+                    </div>
+                </div>
+                
+                <!-- Participants by Belt -->
+                {% if report_data.participants_by_belt %}
+                <div class="bg-gray-700/30 rounded-xl border border-gray-600 overflow-hidden">
+                    <div class="px-5 py-3 border-b border-gray-600 bg-gray-700/50">
+                        <h4 class="text-white font-medium">Participants by Belt Rank</h4>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-700/30">
+                                <tr class="text-xs text-gray-400 uppercase">
+                                    <th class="px-5 py-3 text-left">Belt Rank</th>
+                                    <th class="px-5 py-3 text-center">Count</th>
+                                    <th class="px-5 py-3 text-left">Participants</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-700/50">
+                                {% for item in report_data.participants_by_belt %}
+                                <tr class="hover:bg-gray-700/30 transition-colors">
+                                    <td class="px-5 py-3 text-sm text-white">{{ item.belt_rank|default:"Unknown"|title }}</td>
+                                    <td class="px-5 py-3 text-sm text-gray-400 text-center">{{ item.count }}</td>
+                                    <td class="px-5 py-3 text-sm text-gray-300">{{ item.names }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Report Generation Modal -->
+<div id="reportModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeReportModal()"></div>
+        
+        <div class="inline-block align-bottom bg-gray-800 rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-700">
+            <form method="POST" action="{% url 'admin_reports' %}">
+                {% csrf_token %}
+                <input type="hidden" name="report_type" id="modal_report_type" value="">
+                
+                <div class="bg-gray-800 px-6 pt-6 pb-4">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-white" id="modal_title">Generate Report</h3>
+                        <button type="button" onclick="closeReportModal()" class="text-gray-400 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- Date Range (for membership and financial) -->
+                    <div id="dateRangeSection" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
+                            <input type="date" name="start_date" value="{{ default_start_date }}"
+                                class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">End Date</label>
+                            <input type="date" name="end_date" value="{{ default_end_date }}"
+                                class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <!-- Event Selection (for event reports) -->
+                    <div id="eventSection" class="hidden">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Select Event</label>
+                        <select name="event_id"
+                            class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <option value="">-- Select an Event --</option>
+                            {% for event in events %}
+                            <option value="{{ event.id }}">{{ event.name }} ({{ event.event_date }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-800 px-6 py-4 border-t border-gray-700 flex justify-end gap-3">
+                    <button type="button" onclick="closeReportModal()" 
+                        class="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" id="modal_submit_btn"
+                        class="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors">
+                        Generate Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openReportModal(reportType) {
+        const modal = document.getElementById('reportModal');
+        const modalTitle = document.getElementById('modal_title');
+        const reportTypeInput = document.getElementById('modal_report_type');
+        const dateRangeSection = document.getElementById('dateRangeSection');
+        const eventSection = document.getElementById('eventSection');
+        const submitBtn = document.getElementById('modal_submit_btn');
+        
+        reportTypeInput.value = reportType;
+        
+        if (reportType === 'membership') {
+            modalTitle.textContent = 'Generate Membership Report';
+            dateRangeSection.classList.remove('hidden');
+            eventSection.classList.add('hidden');
+            submitBtn.className = 'px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors';
+        } else if (reportType === 'financial') {
+            modalTitle.textContent = 'Generate Financial Report';
+            dateRangeSection.classList.remove('hidden');
+            eventSection.classList.add('hidden');
+            submitBtn.className = 'px-6 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-500 rounded-lg transition-colors';
+        } else if (reportType === 'event') {
+            modalTitle.textContent = 'Generate Event Report';
+            dateRangeSection.classList.add('hidden');
+            eventSection.classList.remove('hidden');
+            submitBtn.className = 'px-6 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-colors';
+        }
+        
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeReportModal() {
+        const modal = document.getElementById('reportModal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+    
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeReportModal();
+        }
+    });
+</script>
+{% endblock %}

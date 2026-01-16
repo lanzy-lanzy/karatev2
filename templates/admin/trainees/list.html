@@ -1,0 +1,585 @@
+{% extends "base.html" %}
+
+{% block title %}Trainee Management - BlackCobra Karate Club{% endblock %}
+
+{% block page_title %}Trainee Management{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header with Add Button and Export -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-4xl font-bold gradient-text">All Trainees</h2>
+            <p class="text-sm text-gray-400 mt-2">Manage club members and their information</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <!-- Export Options -->
+            <div class="flex flex-col sm:flex-row gap-2">
+                <!-- Export Button - Opens Modal -->
+                <button onclick="openExportModal()"
+                    class="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    Export
+                </button>
+            </div>
+            
+            <!-- Add New Trainee Button -->
+            <a href="{% url 'admin_trainee_add' %}"
+                class="inline-flex items-center justify-center px-8 py-3 text-sm font-semibold text-white btn-primary rounded-lg">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6">
+                    </path>
+                </svg>
+                Add New Trainee
+            </a>
+        </div>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="glass-effect rounded-2xl border border-gray-700 p-6">
+        <div class="flex flex-col sm:flex-row gap-4">
+            <!-- Search Input -->
+            <div class="flex-1">
+                <div class="relative">
+                    <input type="text" name="search" id="trainee-search"
+                        placeholder="Search by name, belt rank, or status..."
+                        class="w-full pl-12 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 transition-colors"
+                        hx-get="{% url 'admin_trainee_list_partial' %}" hx-trigger="keyup changed delay:300ms, search"
+                        hx-target="#trainee-list" hx-swap="innerHTML"
+                        hx-include="[name='status_filter'], [name='belt_filter']">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="htmx-indicator absolute inset-y-0 right-0 pr-4 flex items-center">
+                        <svg class="animate-spin h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="sm:w-40">
+                <select name="status_filter"
+                    class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 transition-colors"
+                    hx-get="{% url 'admin_trainee_list_partial' %}" hx-trigger="change" hx-target="#trainee-list"
+                    hx-swap="innerHTML" hx-include="[name='search'], [name='belt_filter']">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="suspended">Suspended</option>
+                </select>
+            </div>
+
+            <!-- Belt Filter -->
+            <div class="sm:w-40">
+                <select name="belt_filter"
+                    class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 transition-colors"
+                    hx-get="{% url 'admin_trainee_list_partial' %}" hx-trigger="change" hx-target="#trainee-list"
+                    hx-swap="innerHTML" hx-include="[name='search'], [name='status_filter']">
+                    <option value="">All Belts</option>
+                    <option value="white">White</option>
+                    <option value="green">Green</option>
+                    <option value="brown">Brown</option>
+                    <option value="black">Black</option>
+                    <option value="master_degree">Master Degree</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trainee List -->
+    <div id="trainee-list">
+        {% include "admin/trainees/list_partial.html" %}
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div id="exportModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeExportModal()"></div>
+        
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-gray-800 rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-gray-700">
+            <div class="bg-gray-800 px-6 pt-6 pb-4">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-white" id="modal-title">Export Trainee Report</h3>
+                    <button onclick="closeExportModal()" class="text-gray-400 hover:text-white transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Export Format -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-300 mb-3">Export Format</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="modal_format" value="pdf" checked 
+                                class="w-4 h-4 text-red-600 bg-gray-700 border-gray-600 focus:ring-red-500">
+                            <span class="ml-2 text-sm text-white">PDF</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="modal_format" value="csv"
+                                class="w-4 h-4 text-red-600 bg-gray-700 border-gray-600 focus:ring-red-500">
+                            <span class="ml-2 text-sm text-white">CSV</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Organization -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-300 mb-3">Organize By</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="modal_export_by" value="user" checked 
+                                class="w-4 h-4 text-red-600 bg-gray-700 border-gray-600 focus:ring-red-500">
+                            <span class="ml-2 text-sm text-white">By User</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="modal_export_by" value="belt"
+                                class="w-4 h-4 text-red-600 bg-gray-700 border-gray-600 focus:ring-red-500">
+                            <span class="ml-2 text-sm text-white">By Belt Rank</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Trainee Selection Mode -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-300 mb-3">Trainees to Export</label>
+                    <div class="flex gap-4 mb-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="trainee_selection_mode" value="all" checked 
+                                onchange="updateTraineeSelectionMode()"
+                                class="w-4 h-4 text-red-600 bg-gray-700 border-gray-600 focus:ring-red-500">
+                            <span class="ml-2 text-sm text-white">All Trainees</span>
+                            <span class="ml-1 text-xs text-gray-400">(matching filters)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="trainee_selection_mode" value="selected"
+                                onchange="updateTraineeSelectionMode()"
+                                class="w-4 h-4 text-red-600 bg-gray-700 border-gray-600 focus:ring-red-500">
+                            <span class="ml-2 text-sm text-white">Specific Trainees</span>
+                        </label>
+                    </div>
+                    
+                    <!-- Trainee Selection Container -->
+                    <div id="traineeSelectionContainer" class="hidden">
+                        <!-- Search input -->
+                        <div class="relative mb-3">
+                            <input type="text" id="traineeSearchInput" placeholder="Search trainees by name..."
+                                oninput="filterTraineeList()"
+                                class="w-full pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:border-red-400">
+                            <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        
+                        <!-- Selected Trainees Tags -->
+                        <div id="selectedTraineeTags" class="flex flex-wrap gap-2 mb-3 min-h-[32px]">
+                            <!-- Tags will be inserted here -->
+                        </div>
+                        
+                        <!-- Trainee List -->
+                        <div class="bg-gray-700/50 rounded-lg max-h-48 overflow-y-auto">
+                            <div id="traineeListForSelection" class="divide-y divide-gray-600">
+                                <!-- Trainee items will be populated here -->
+                            </div>
+                            <div id="noTraineesFound" class="hidden p-4 text-center text-gray-400 text-sm">
+                                No trainees found matching your search
+                            </div>
+                        </div>
+                        
+                        <div class="mt-2 flex justify-between items-center text-xs">
+                            <span class="text-gray-400">
+                                <span id="selectedTraineeCount">0</span> trainee(s) selected
+                            </span>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="selectAllTraineesInModal()" class="text-blue-400 hover:text-blue-300">Select All</button>
+                                <span class="text-gray-500">|</span>
+                                <button type="button" onclick="clearAllTraineesInModal()" class="text-blue-400 hover:text-blue-300">Clear All</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PDF Section Filters -->
+                <div id="pdfSectionsContainer" class="mb-6">
+                    <label class="block text-sm font-medium text-gray-300 mb-3">Include Sections (PDF Only)</label>
+                    <div class="space-y-3 bg-gray-700/50 rounded-lg p-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="section_header" value="1" checked
+                                class="w-4 h-4 text-red-600 bg-gray-600 border-gray-500 rounded focus:ring-red-500">
+                            <span class="ml-3 text-sm text-white">Header</span>
+                            <span class="ml-2 text-xs text-gray-400">(Club name, report title, date)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="section_summary" value="1" checked
+                                class="w-4 h-4 text-red-600 bg-gray-600 border-gray-500 rounded focus:ring-red-500">
+                            <span class="ml-3 text-sm text-white">Summary Statistics</span>
+                            <span class="ml-2 text-xs text-gray-400">(Total, active, inactive counts)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="section_details" value="1" checked
+                                class="w-4 h-4 text-red-600 bg-gray-600 border-gray-500 rounded focus:ring-red-500">
+                            <span class="ml-3 text-sm text-white">Trainee Details</span>
+                            <span class="ml-2 text-xs text-gray-400">(List of trainees with information)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="section_signature" value="1" checked
+                                class="w-4 h-4 text-red-600 bg-gray-600 border-gray-500 rounded focus:ring-red-500">
+                            <span class="ml-3 text-sm text-white">Signature Section</span>
+                            <span class="ml-2 text-xs text-gray-400">(Authorization signature area)</span>
+                        </label>
+                    </div>
+                    <div class="mt-2 flex gap-2">
+                        <button type="button" onclick="selectAllSections()" class="text-xs text-blue-400 hover:text-blue-300">Select All</button>
+                        <span class="text-gray-500">|</span>
+                        <button type="button" onclick="deselectAllSections()" class="text-xs text-blue-400 hover:text-blue-300">Deselect All</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-800 px-6 py-4 border-t border-gray-700 flex justify-end gap-3">
+                <button onclick="closeExportModal()" 
+                    class="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                    Cancel
+                </button>
+                <button onclick="executeExport()" 
+                    class="px-6 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
+                    Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Store all trainees for modal selection
+    let allTraineesData = [];
+    let selectedTraineesInModal = new Set();
+    
+    // Collect trainee data from the table
+    function collectTraineeData() {
+        allTraineesData = [];
+        const rows = document.querySelectorAll('.trainee-checkbox');
+        rows.forEach(checkbox => {
+            const row = checkbox.closest('tr');
+            if (row) {
+                const nameCell = row.querySelector('td:nth-child(2) .text-sm.font-semibold');
+                const emailCell = row.querySelector('td:nth-child(2) .text-gray-400');
+                const beltCell = row.querySelector('td:nth-child(3) span');
+                
+                if (nameCell) {
+                    allTraineesData.push({
+                        id: checkbox.value,
+                        name: nameCell.textContent.trim(),
+                        email: emailCell ? emailCell.textContent.trim() : '',
+                        belt: beltCell ? beltCell.textContent.trim() : ''
+                    });
+                }
+            }
+        });
+        
+        // Also check mobile cards
+        if (allTraineesData.length === 0) {
+            const cards = document.querySelectorAll('.md\\:hidden .feature-card');
+            cards.forEach((card, index) => {
+                const checkbox = document.querySelectorAll('.trainee-checkbox')[index];
+                if (checkbox) {
+                    const nameEl = card.querySelector('.text-sm.font-semibold');
+                    const emailEl = card.querySelector('.text-xs.text-gray-400');
+                    if (nameEl) {
+                        allTraineesData.push({
+                            id: checkbox.value,
+                            name: nameEl.textContent.trim(),
+                            email: emailEl ? emailEl.textContent.trim() : '',
+                            belt: ''
+                        });
+                    }
+                }
+            });
+        }
+    }
+    
+    // Modal functions
+    function openExportModal() {
+        const modal = document.getElementById('exportModal');
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        
+        // Collect trainee data
+        collectTraineeData();
+        
+        // Check if any trainees were pre-selected from the list
+        const preSelectedCheckboxes = document.querySelectorAll('.trainee-checkbox:checked');
+        if (preSelectedCheckboxes.length > 0) {
+            // Switch to "Specific Trainees" mode
+            document.querySelector('input[name="trainee_selection_mode"][value="selected"]').checked = true;
+            selectedTraineesInModal = new Set(Array.from(preSelectedCheckboxes).map(cb => cb.value));
+        } else {
+            selectedTraineesInModal = new Set();
+        }
+        
+        // Update UI
+        updateTraineeSelectionMode();
+        updatePdfSectionsVisibility();
+    }
+    
+    function closeExportModal() {
+        const modal = document.getElementById('exportModal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+    
+    function updateTraineeSelectionMode() {
+        const mode = document.querySelector('input[name="trainee_selection_mode"]:checked')?.value;
+        const container = document.getElementById('traineeSelectionContainer');
+        
+        if (mode === 'selected') {
+            container.classList.remove('hidden');
+            populateTraineeList();
+            updateSelectedTraineeTags();
+            updateSelectedTraineeCount();
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+    
+    function populateTraineeList() {
+        const listContainer = document.getElementById('traineeListForSelection');
+        const searchInput = document.getElementById('traineeSearchInput');
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+        
+        let filteredTrainees = allTraineesData;
+        if (searchTerm) {
+            filteredTrainees = allTraineesData.filter(t => 
+                t.name.toLowerCase().includes(searchTerm) || 
+                t.email.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        if (filteredTrainees.length === 0) {
+            listContainer.innerHTML = '';
+            document.getElementById('noTraineesFound').classList.remove('hidden');
+            return;
+        }
+        
+        document.getElementById('noTraineesFound').classList.add('hidden');
+        
+        listContainer.innerHTML = filteredTrainees.map(trainee => `
+            <label class="flex items-center p-3 hover:bg-gray-600/50 cursor-pointer transition-colors">
+                <input type="checkbox" class="modal-trainee-checkbox w-4 h-4 text-red-600 bg-gray-600 border-gray-500 rounded focus:ring-red-500"
+                    value="${trainee.id}" 
+                    ${selectedTraineesInModal.has(trainee.id) ? 'checked' : ''}
+                    onchange="toggleTraineeInModal('${trainee.id}')">
+                <div class="ml-3 flex-1">
+                    <div class="text-sm font-medium text-white">${trainee.name}</div>
+                    <div class="text-xs text-gray-400">${trainee.email}</div>
+                </div>
+                ${trainee.belt ? `<span class="text-xs text-gray-400">${trainee.belt}</span>` : ''}
+            </label>
+        `).join('');
+    }
+    
+    function filterTraineeList() {
+        populateTraineeList();
+    }
+    
+    function toggleTraineeInModal(traineeId) {
+        if (selectedTraineesInModal.has(traineeId)) {
+            selectedTraineesInModal.delete(traineeId);
+        } else {
+            selectedTraineesInModal.add(traineeId);
+        }
+        updateSelectedTraineeTags();
+        updateSelectedTraineeCount();
+    }
+    
+    function updateSelectedTraineeTags() {
+        const tagsContainer = document.getElementById('selectedTraineeTags');
+        
+        if (selectedTraineesInModal.size === 0) {
+            tagsContainer.innerHTML = '<span class="text-gray-500 text-sm">No trainees selected</span>';
+            return;
+        }
+        
+        const tags = Array.from(selectedTraineesInModal).map(id => {
+            const trainee = allTraineesData.find(t => t.id === id);
+            if (!trainee) return '';
+            return `
+                <span class="inline-flex items-center gap-1 px-2 py-1 bg-red-600/20 text-red-300 rounded-full text-xs">
+                    ${trainee.name}
+                    <button type="button" onclick="removeTraineeFromModal('${id}')" class="hover:text-white">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </span>
+            `;
+        }).join('');
+        
+        tagsContainer.innerHTML = tags;
+    }
+    
+    function updateSelectedTraineeCount() {
+        document.getElementById('selectedTraineeCount').textContent = selectedTraineesInModal.size;
+    }
+    
+    function removeTraineeFromModal(traineeId) {
+        selectedTraineesInModal.delete(traineeId);
+        updateSelectedTraineeTags();
+        updateSelectedTraineeCount();
+        
+        // Update checkbox in list
+        const checkbox = document.querySelector(`.modal-trainee-checkbox[value="${traineeId}"]`);
+        if (checkbox) checkbox.checked = false;
+    }
+    
+    function selectAllTraineesInModal() {
+        const searchInput = document.getElementById('traineeSearchInput');
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+        
+        let traineesToSelect = allTraineesData;
+        if (searchTerm) {
+            traineesToSelect = allTraineesData.filter(t => 
+                t.name.toLowerCase().includes(searchTerm) || 
+                t.email.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        traineesToSelect.forEach(t => selectedTraineesInModal.add(t.id));
+        populateTraineeList();
+        updateSelectedTraineeTags();
+        updateSelectedTraineeCount();
+    }
+    
+    function clearAllTraineesInModal() {
+        selectedTraineesInModal.clear();
+        populateTraineeList();
+        updateSelectedTraineeTags();
+        updateSelectedTraineeCount();
+    }
+    
+    function updatePdfSectionsVisibility() {
+        const format = document.querySelector('input[name="modal_format"]:checked')?.value;
+        const sectionsContainer = document.getElementById('pdfSectionsContainer');
+        
+        if (format === 'pdf') {
+            sectionsContainer.classList.remove('opacity-50', 'pointer-events-none');
+        } else {
+            sectionsContainer.classList.add('opacity-50', 'pointer-events-none');
+        }
+    }
+    
+    // Listen for format change
+    document.querySelectorAll('input[name="modal_format"]').forEach(radio => {
+        radio.addEventListener('change', updatePdfSectionsVisibility);
+    });
+    
+    function selectAllSections() {
+        document.querySelectorAll('#pdfSectionsContainer input[type="checkbox"]').forEach(cb => cb.checked = true);
+    }
+    
+    function deselectAllSections() {
+        document.querySelectorAll('#pdfSectionsContainer input[type="checkbox"]').forEach(cb => cb.checked = false);
+    }
+    
+    function executeExport() {
+        // Get format and organization
+        const fileFormat = document.querySelector('input[name="modal_format"]:checked')?.value || 'pdf';
+        const exportBy = document.querySelector('input[name="modal_export_by"]:checked')?.value || 'user';
+        const selectionMode = document.querySelector('input[name="trainee_selection_mode"]:checked')?.value || 'all';
+        
+        // Get current filter values
+        const statusFilter = document.querySelector('[name="status_filter"]')?.value || '';
+        const beltFilter = document.querySelector('[name="belt_filter"]')?.value || '';
+        
+        // Build URL parameters
+        let params = `format=${fileFormat}&export_by=${exportBy}`;
+        
+        // Get trainee IDs based on selection mode
+        if (selectionMode === 'selected' && selectedTraineesInModal.size > 0) {
+            params += `&trainee_ids=${Array.from(selectedTraineesInModal).join(',')}`;
+        } else {
+            // Apply filters for "all" mode
+            if (statusFilter) params += `&status_filter=${statusFilter}`;
+            if (beltFilter) params += `&belt_filter=${beltFilter}`;
+        }
+        
+        // Add section filters for PDF
+        if (fileFormat === 'pdf') {
+            const sections = [];
+            if (document.querySelector('input[name="section_header"]')?.checked) sections.push('header');
+            if (document.querySelector('input[name="section_summary"]')?.checked) sections.push('summary');
+            if (document.querySelector('input[name="section_details"]')?.checked) sections.push('details');
+            if (document.querySelector('input[name="section_signature"]')?.checked) sections.push('signature');
+            
+            if (sections.length > 0) {
+                params += `&sections=${sections.join(',')}`;
+            }
+        }
+        
+        // Navigate to export URL
+        window.location.href = `{% url 'admin_trainee_export' %}?${params}`;
+        
+        // Close modal
+        closeExportModal();
+    }
+    
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeExportModal();
+        }
+    });
+    
+    function updateSelectedCount() {
+        const checkboxes = document.querySelectorAll('.trainee-checkbox:checked');
+        const bulkActions = document.getElementById('bulkActions');
+        const selectedCount = document.getElementById('selectedCount');
+        
+        if (selectedCount) selectedCount.textContent = checkboxes.length;
+        if (bulkActions) bulkActions.style.display = checkboxes.length > 0 ? 'flex' : 'none';
+    }
+    
+    function toggleSelectAll() {
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const traineeCheckboxes = document.querySelectorAll('.trainee-checkbox');
+        traineeCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+        updateSelectedCount();
+    }
+    
+    function selectAll() {
+        document.getElementById('selectAllCheckbox').checked = true;
+        toggleSelectAll();
+    }
+    
+    function deselectAll() {
+        document.getElementById('selectAllCheckbox').checked = false;
+        toggleSelectAll();
+    }
+    
+    // Re-collect trainee data after HTMX updates
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        if (event.detail.target.id === 'trainee-list') {
+            collectTraineeData();
+        }
+    });
+</script>
+{% endblock %}

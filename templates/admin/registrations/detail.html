@@ -1,0 +1,612 @@
+{% extends "base.html" %}
+
+{% block title %}Registration Details - Admin Dashboard{% endblock %}
+
+{% block page_title %}Registration Details{% endblock %}
+
+{% block content %}
+<style>
+    .detail-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+        border: 2px solid #e5e7eb;
+        border-radius: 0.875rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .detail-header {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        color: white;
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+        border-bottom: 2px solid #3b82f6;
+    }
+    
+    .detail-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    
+    .detail-header h2 {
+        position: relative;
+        z-index: 10;
+        font-size: 1.875rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .detail-header p {
+        position: relative;
+        z-index: 10;
+        color: #dbeafe;
+        margin-top: 0.5rem;
+    }
+    
+    .detail-content {
+        padding: 2rem;
+    }
+    
+    .detail-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .detail-section h3 {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #111827;
+        margin: 0;
+    }
+    
+    .detail-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .detail-field {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .detail-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .detail-value {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #111827;
+    }
+    
+    .detail-divider {
+        border-top: 2px solid #e5e7eb;
+        margin: 2rem 0 0 0;
+        padding-top: 2rem;
+    }
+    
+    .document-box {
+        background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        transition: all 0.3s ease;
+    }
+    
+    .document-box:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.1);
+    }
+    
+    .document-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .download-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1.2rem;
+        background: linear-gradient(135deg, #3b82f6, #1e40af);
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    
+    .download-button:hover {
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border: 1.5px solid currentColor;
+    }
+    
+    .status-badge.pending {
+        background: linear-gradient(135deg, #fed7aa, #fecaca);
+        color: #ea580c;
+    }
+    
+    .status-badge.approved {
+        background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+        color: #16a34a;
+    }
+    
+    .status-badge.paid {
+        background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+        color: #16a34a;
+    }
+    
+    .status-badge.unpaid {
+        background: linear-gradient(135deg, #fed7aa, #fecaca);
+        color: #ea580c;
+    }
+    
+    .status-badge.rejected {
+        background: linear-gradient(135deg, #fecaca, #fca5a5);
+        color: #dc2626;
+    }
+    
+    .info-box {
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        border: 2px solid #7dd3fc;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+    }
+    
+    .info-box.rejection {
+        background: linear-gradient(135deg, #fecaca, #fca5a5);
+        border-color: #f87171;
+    }
+    
+    .info-box p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+    
+    .info-box p.label {
+        color: #1e40af;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-box.rejection p.label {
+        color: #7f1d1d;
+    }
+    
+    .info-box p.content {
+        color: #0c4a6e;
+    }
+    
+    .info-box.rejection p.content {
+        color: #7f1d1d;
+    }
+    
+    .action-button {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .action-button.approve {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+    
+    .action-button.approve:hover {
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    .action-button.reject {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+    
+    .action-button.reject:hover {
+        box-shadow: 0 10px 25px rgba(239, 68, 68, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    .action-button.mark-paid {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+    }
+    
+    .action-button.mark-paid:hover {
+        box-shadow: 0 10px 25px rgba(245, 158, 11, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        color: #3b82f6;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border-radius: 0.5rem;
+    }
+    
+    .back-link:hover {
+        color: #1e40af;
+        background: rgba(59, 130, 246, 0.1);
+    }
+    
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        border: 1.5px solid #bfdbfe;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .checkbox-label:hover {
+        background: linear-gradient(135deg, #e0f2fe, #cffafe);
+    }
+    
+    .checkbox-label input {
+        width: 1.25rem;
+        height: 1.25rem;
+        cursor: pointer;
+        accent-color: #3b82f6;
+    }
+    
+    .textarea-field {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+        font-family: inherit;
+        transition: all 0.3s ease;
+        background: white;
+        color: #111827;
+        resize: vertical;
+    }
+    
+    .textarea-field:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .textarea-field::placeholder {
+        color: #9ca3af;
+    }
+    
+    .action-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const markPaymentCheckbox = document.getElementById('mark_payment');
+    const approveButton = document.querySelector('button[value="approve"]');
+    
+    if (markPaymentCheckbox && approveButton) {
+        // Update button state on checkbox change
+        markPaymentCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                approveButton.disabled = false;
+                approveButton.style.opacity = '1';
+                approveButton.style.cursor = 'pointer';
+            } else {
+                approveButton.disabled = true;
+                approveButton.style.opacity = '0.5';
+                approveButton.style.cursor = 'not-allowed';
+            }
+        });
+        
+        // Initial state - if payment is unpaid and checkbox not checked, disable button
+        if (!markPaymentCheckbox.checked) {
+            approveButton.disabled = true;
+            approveButton.style.opacity = '0.5';
+            approveButton.style.cursor = 'not-allowed';
+        }
+    }
+});
+</script>
+
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Back Link -->
+    <a href="{% url 'admin_registrations' %}" class="back-link">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Back to Registrations
+    </a>
+
+    <!-- Registration Card -->
+    <div class="detail-card">
+        <!-- Header -->
+        <div class="detail-header">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h2>{{ registration.first_name }} {{ registration.last_name }}</h2>
+                    <p>{{ registration.email }}</p>
+                </div>
+                <div class="flex gap-2 flex-wrap justify-end">
+                    {% if registration.status == 'pending' %}
+                        <span class="status-badge pending">Pending Review</span>
+                    {% elif registration.status == 'approved' %}
+                        <span class="status-badge approved">Approved</span>
+                    {% elif registration.status == 'rejected' %}
+                        <span class="status-badge rejected">Rejected</span>
+                    {% endif %}
+                     
+                    {% if registration.payment_status == 'paid' %}
+                        <span class="status-badge paid">Payment Paid</span>
+                    {% else %}
+                        <span class="status-badge unpaid">Payment Unpaid</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="detail-content space-y-6">
+            <!-- Personal Information -->
+            <div class="detail-section">
+                <h3>Personal Information</h3>
+                <div class="detail-group">
+                    <div class="detail-field">
+                        <p class="detail-label">First Name</p>
+                        <p class="detail-value">{{ registration.first_name }}</p>
+                    </div>
+                    <div class="detail-field">
+                        <p class="detail-label">Last Name</p>
+                        <p class="detail-value">{{ registration.last_name }}</p>
+                    </div>
+                    <div class="detail-field">
+                        <p class="detail-label">Email</p>
+                        <p class="detail-value">{{ registration.email }}</p>
+                    </div>
+                    <div class="detail-field">
+                        <p class="detail-label">Phone</p>
+                        <p class="detail-value">{{ registration.phone }}</p>
+                    </div>
+                    <div class="detail-field">
+                        <p class="detail-label">Date of Birth</p>
+                        <p class="detail-value">{{ registration.date_of_birth|date:"M d, Y" }}</p>
+                    </div>
+                    <div class="detail-field">
+                        <p class="detail-label">Belt Level</p>
+                        <p class="detail-value">{{ registration.get_belt_level_display }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents -->
+            <div class="detail-section detail-divider">
+                <h3>Submitted Documents</h3>
+                <div class="detail-group">
+                    <div class="document-box">
+                        <p class="document-label">Medical Certificate</p>
+                        {% if registration.medical_certificate %}
+                            <a href="{{ registration.medical_certificate.url }}" 
+                               target="_blank"
+                               class="download-button">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Download
+                            </a>
+                        {% else %}
+                            <p class="text-gray-500 text-sm">Not uploaded</p>
+                        {% endif %}
+                    </div>
+                    <div class="document-box">
+                        <p class="document-label">Waiver Form</p>
+                        {% if registration.waiver %}
+                            <a href="{{ registration.waiver.url }}" 
+                               target="_blank"
+                               class="download-button">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Download
+                            </a>
+                        {% else %}
+                            <p class="text-gray-500 text-sm">Not uploaded</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registration Status -->
+            <div class="detail-section detail-divider">
+                <h3>Registration Status</h3>
+                <div class="detail-group">
+                    <div class="detail-field">
+                        <p class="detail-label">Status</p>
+                        <p class="detail-value">{{ registration.get_status_display }}</p>
+                    </div>
+                    <div class="detail-field">
+                        <p class="detail-label">Payment Status</p>
+                        <p class="detail-value">{{ registration.get_payment_status_display }}</p>
+                    </div>
+                    <div class="detail-field">
+                        <p class="detail-label">Submitted On</p>
+                        <p class="detail-value">{{ registration.created_at|date:"M d, Y H:i" }}</p>
+                    </div>
+                    <div class="detail-field">
+                        <p class="detail-label">Membership Fee</p>
+                        <p class="detail-value">₱{{ registration.membership_fee }}</p>
+                    </div>
+                </div>
+                
+                {% if registration.reviewed_by %}
+                <div class="detail-divider">
+                    <p class="detail-label">Reviewed By</p>
+                    <p class="detail-value">{{ registration.reviewed_by.get_full_name|default:registration.reviewed_by.username }}</p>
+                    <p class="detail-label mt-2">Reviewed On</p>
+                    <p class="detail-value">{{ registration.reviewed_at|date:"M d, Y H:i" }}</p>
+                </div>
+                {% endif %}
+                
+                {% if registration.rejection_reason %}
+                <div class="info-box rejection detail-divider" style="margin-top: 1rem; padding-top: 1rem;">
+                    <p class="label">Rejection Reason</p>
+                    <p class="content">{{ registration.rejection_reason }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Payment Details -->
+            {% if payment %}
+            <div class="detail-section detail-divider">
+                <h3>Payment Record</h3>
+                <div class="detail-group">
+                    <div class="detail-field">
+                        <p class="detail-label">Amount</p>
+                        <p class="detail-value">₱{{ payment.amount }}</p>
+                    </div>
+                    <div class="detail-field">
+                        <p class="detail-label">Payment Type</p>
+                        <p class="detail-value">{{ payment.get_payment_type_display }}</p>
+                    </div>
+                    <div class="detail-field">
+                        <p class="detail-label">Payment Method</p>
+                        <p class="detail-value">{{ payment.get_payment_method_display }}</p>
+                    </div>
+                    <div class="detail-field">
+                        <p class="detail-label">Status</p>
+                        <p class="detail-value">
+                            {% if payment.status == 'completed' %}
+                                <span class="status-badge paid">{{ payment.get_status_display }}</span>
+                            {% else %}
+                                <span class="status-badge pending">{{ payment.get_status_display }}</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="detail-field">
+                        <p class="detail-label">Paid On</p>
+                        <p class="detail-value">{{ payment.completed_at|date:"M d, Y H:i"|default:"Not yet paid" }}</p>
+                    </div>
+                    {% if payment.notes %}
+                    <div class="detail-field" style="grid-column: 1 / -1;">
+                        <p class="detail-label">Notes</p>
+                        <p class="detail-value">{{ payment.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Admin Actions -->
+            <div class="detail-section detail-divider">
+                <h3>Admin Actions</h3>
+                
+                <!-- Payment Action for Approved Registrations -->
+                {% if registration.status == 'approved' and registration.payment_status == 'unpaid' %}
+                <form method="POST" class="space-y-4 mb-4">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="mark_payment_paid" 
+                            class="action-button mark-paid">
+                        Mark Payment as Paid
+                    </button>
+                </form>
+                {% endif %}
+                
+                <!-- Registration Status Actions (for pending) -->
+                {% if registration.status == 'pending' %}
+                
+                <form method="POST" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <!-- Approval Section -->
+                    <div style="border: 2px solid #e5e7eb; border-radius: 0.75rem; padding: 1.5rem; background: #f9fafb;">
+                        <h4 style="margin: 0 0 1rem 0; color: #111827; font-weight: 600;">Approve Registration</h4>
+                        
+                        <!-- Payment Status Warning (only for approval) -->
+                        {% if registration.payment_status == 'unpaid' %}
+                        <div class="info-box" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #fed7aa, #fecaca); border-color: #f97316;">
+                            <p class="label" style="color: #ea580c;">⚠️ Payment Required</p>
+                            <p class="content" style="color: #7c2d12;">Registration cannot be approved until payment is marked as paid. Check the "Mark as Payment Paid" checkbox below or process payment first.</p>
+                        </div>
+                        
+                        <div>
+                            <label for="mark_payment" class="checkbox-label">
+                                <input type="checkbox" id="mark_payment" name="mark_payment">
+                                <span>Mark as Payment Paid <span style="color: #ef4444;">*</span></span>
+                            </label>
+                            <p style="font-size: 0.85rem; color: #6b7280; margin-top: 0.25rem;">This must be checked to approve the registration</p>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Approve Button -->
+                        <button type="submit" name="action" value="approve" 
+                                class="action-button approve"
+                                {% if registration.payment_status == 'unpaid' %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}>
+                            Approve Registration
+                        </button>
+                    </div>
+                    
+                    <!-- Rejection Section -->
+                    <div style="border: 2px solid #e5e7eb; border-radius: 0.75rem; padding: 1.5rem; background: #f9fafb;">
+                        <h4 style="margin: 0 0 1rem 0; color: #111827; font-weight: 600;">Reject Registration</h4>
+                        
+                        <div class="space-y-2">
+                            <label for="rejection_reason" class="block detail-label">
+                                Rejection Reason (optional)
+                            </label>
+                            <textarea id="rejection_reason" name="rejection_reason" rows="3"
+                                      placeholder="Explain why this registration is being rejected..."
+                                      class="textarea-field"></textarea>
+                        </div>
+                        
+                        <button type="submit" name="action" value="reject" 
+                                class="action-button reject">
+                            Reject Registration
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

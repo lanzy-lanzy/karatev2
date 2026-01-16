@@ -1,0 +1,655 @@
+{% extends "base.html" %}
+
+{% block title %}Training Sessions - BlackCobra Karate Club{% endblock %}
+
+{% block page_title %}Training Sessions{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-3xl font-bold text-white">Training Sessions</h2>
+            <p class="text-gray-400 mt-1">Manage all training sessions and attendance records</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'attendance_dashboard' %}"
+                class="inline-flex items-center px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-xl transition-colors border border-gray-600">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Dashboard
+            </a>
+            <button onclick="openExportModal()"
+                class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Export
+            </button>
+            <a href="{% url 'session_create' %}"
+                class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                New Session
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-gray-800 rounded-2xl border border-gray-700 p-6">
+        <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-2">Search</label>
+                <input type="text" name="search" value="{{ search }}" placeholder="Title, instructor..."
+                    class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-2">Status</label>
+                <select name="status"
+                    class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <option value="">All Status</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-2">Type</label>
+                <select name="type"
+                    class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <option value="">All Types</option>
+                    {% for value, label in session_types %}
+                    <option value="{{ value }}" {% if type_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-2">From Date</label>
+                <input type="date" name="date_from" value="{{ date_from }}"
+                    class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            </div>
+            <div class="flex items-end gap-2">
+                <div class="flex-1">
+                    <label class="block text-xs font-medium text-gray-400 mb-2">To Date</label>
+                    <input type="date" name="date_to" value="{{ date_to }}"
+                        class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition-colors">
+                    Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sessions Table -->
+    <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
+        {% if sessions %}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-700/50">
+                    <tr class="text-xs text-gray-400 uppercase">
+                        <th class="px-6 py-4 text-left">Session</th>
+                        <th class="px-6 py-4 text-left">Date & Time</th>
+                        <th class="px-6 py-4 text-left">Location</th>
+                        <th class="px-6 py-4 text-center">Attendance</th>
+                        <th class="px-6 py-4 text-center">Status</th>
+                        <th class="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700/50">
+                    {% for session in sessions %}
+                    <tr class="hover:bg-gray-700/30 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center
+                                    {% if session.session_type == 'regular' %}bg-blue-600/20 text-blue-400
+                                    {% elif session.session_type == 'special' %}bg-purple-600/20 text-purple-400
+                                    {% elif session.session_type == 'exam' %}bg-red-600/20 text-red-400
+                                    {% elif session.session_type == 'seminar' %}bg-amber-600/20 text-amber-400
+                                    {% else %}bg-gray-600/20 text-gray-400{% endif %}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-white">{{ session.title }}</div>
+                                    <div class="text-xs text-gray-500">{{ session.get_session_type_display }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-white">{{ session.date|date:"M j, Y" }}</div>
+                            <div class="text-xs text-gray-500">{{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-gray-300">{{ session.location }}</div>
+                            {% if session.instructor %}
+                            <div class="text-xs text-gray-500">{{ session.instructor }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            {% if session.total_marked > 0 %}
+                            <div class="flex items-center justify-center gap-2">
+                                <span class="text-green-400 font-semibold">{{ session.present_count }}</span>
+                                <span class="text-gray-500">/</span>
+                                <span class="text-gray-400">{{ session.total_marked }}</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-1 mt-1 max-w-[60px] mx-auto">
+                                <div class="bg-green-500 h-1 rounded-full" style="width: {{ session.attendance_rate }}%"></div>
+                            </div>
+                            {% else %}
+                            <span class="text-gray-500 text-sm">Not marked</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium
+                                {% if session.status == 'completed' %}bg-green-500/20 text-green-400
+                                {% elif session.status == 'ongoing' %}bg-blue-500/20 text-blue-400
+                                {% elif session.status == 'scheduled' %}bg-gray-500/20 text-gray-400
+                                {% else %}bg-red-500/20 text-red-400{% endif %}">
+                                {{ session.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{% url 'session_attendance' session.id %}"
+                                    class="p-2 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 rounded-lg transition-colors"
+                                    title="Mark Attendance">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </a>
+                                <a href="{% url 'session_edit' session.id %}"
+                                    class="p-2 bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 rounded-lg transition-colors"
+                                    title="Edit">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </a>
+                                <a href="{% url 'session_delete' session.id %}"
+                                    class="p-2 bg-red-600/20 text-red-400 hover:bg-red-600/30 rounded-lg transition-colors"
+                                    title="Delete">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if sessions.has_other_pages %}
+        <div class="px-6 py-4 border-t border-gray-700 flex items-center justify-between">
+            <div class="text-sm text-gray-400">
+                Showing {{ sessions.start_index }} - {{ sessions.end_index }} of {{ sessions.paginator.count }} sessions
+            </div>
+            <div class="flex gap-2">
+                {% if sessions.has_previous %}
+                <a href="?page={{ sessions.previous_page_number }}&status={{ status_filter }}&type={{ type_filter }}&search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}"
+                    class="px-3 py-1.5 bg-gray-700 text-gray-300 hover:bg-gray-600 rounded-lg text-sm">
+                    Previous
+                </a>
+                {% endif %}
+                <span class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm">
+                    {{ sessions.number }}
+                </span>
+                {% if sessions.has_next %}
+                <a href="?page={{ sessions.next_page_number }}&status={{ status_filter }}&type={{ type_filter }}&search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}"
+                    class="px-3 py-1.5 bg-gray-700 text-gray-300 hover:bg-gray-600 rounded-lg text-sm">
+                    Next
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="p-12 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <h3 class="mt-3 text-lg font-medium text-gray-300">No sessions found</h3>
+            <p class="mt-1 text-sm text-gray-500">Create your first training session to get started.</p>
+            <a href="{% url 'session_create' %}"
+                class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Create Session
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div id="exportModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeExportModal()"></div>
+        
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-gray-800 rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-gray-700">
+            <div class="bg-gray-800 px-6 pt-6 pb-4">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-white" id="modal-title">Export Session Attendance Report</h3>
+                    <button onclick="closeExportModal()" class="text-gray-400 hover:text-white transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Export Format -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-300 mb-3">Export Format</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="modal_format" value="pdf" checked 
+                                class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-white">PDF</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="modal_format" value="csv"
+                                class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-white">CSV</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Date Range Filter -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-300 mb-3">Date Range (Optional)</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">From</label>
+                            <input type="date" id="export_date_from" value="{{ date_from }}"
+                                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">To</label>
+                            <input type="date" id="export_date_to" value="{{ date_to }}"
+                                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Session Selection Mode -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-300 mb-3">Sessions to Export</label>
+                    <div class="flex gap-4 mb-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="session_selection_mode" value="all" checked 
+                                onchange="updateSessionSelectionMode()"
+                                class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-white">All Sessions</span>
+                            <span class="ml-1 text-xs text-gray-400">(matching date filter)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="session_selection_mode" value="selected"
+                                onchange="updateSessionSelectionMode()"
+                                class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-white">Specific Sessions</span>
+                        </label>
+                    </div>
+                    
+                    <!-- Session Selection Container -->
+                    <div id="sessionSelectionContainer" class="hidden">
+                        <!-- Search input -->
+                        <div class="relative mb-3">
+                            <input type="text" id="sessionSearchInput" placeholder="Search sessions..."
+                                oninput="filterSessionList()"
+                                class="w-full pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:border-blue-400">
+                            <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        
+                        <!-- Selected Session Tags -->
+                        <div id="selectedSessionTags" class="flex flex-wrap gap-2 mb-3 min-h-[32px]">
+                            <span class="text-gray-500 text-sm">No sessions selected</span>
+                        </div>
+                        
+                        <!-- Session List -->
+                        <div class="bg-gray-700/50 rounded-lg max-h-48 overflow-y-auto">
+                            <div id="sessionListForSelection" class="divide-y divide-gray-600">
+                                <!-- Session items will be populated here -->
+                            </div>
+                            <div id="noSessionsFound" class="hidden p-4 text-center text-gray-400 text-sm">
+                                No sessions found matching your search
+                            </div>
+                        </div>
+                        
+                        <div class="mt-2 flex justify-between items-center text-xs">
+                            <span class="text-gray-400">
+                                <span id="selectedSessionCount">0</span> session(s) selected
+                            </span>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="selectAllSessionsInModal()" class="text-blue-400 hover:text-blue-300">Select All</button>
+                                <span class="text-gray-500">|</span>
+                                <button type="button" onclick="clearAllSessionsInModal()" class="text-blue-400 hover:text-blue-300">Clear All</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PDF Section Filters -->
+                <div id="pdfSectionsContainer" class="mb-6">
+                    <label class="block text-sm font-medium text-gray-300 mb-3">Include Sections (PDF Only)</label>
+                    <div class="space-y-3 bg-gray-700/50 rounded-lg p-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="section_header" value="1" checked
+                                class="w-4 h-4 text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500">
+                            <span class="ml-3 text-sm text-white">Header</span>
+                            <span class="ml-2 text-xs text-gray-400">(Club name, report title, date range)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="section_summary" value="1" checked
+                                class="w-4 h-4 text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500">
+                            <span class="ml-3 text-sm text-white">Summary Statistics</span>
+                            <span class="ml-2 text-xs text-gray-400">(Total sessions, attendance rates)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="section_sessions" value="1" checked
+                                class="w-4 h-4 text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500">
+                            <span class="ml-3 text-sm text-white">Sessions Overview</span>
+                            <span class="ml-2 text-xs text-gray-400">(List of all sessions with stats)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="section_details" value="1" checked
+                                class="w-4 h-4 text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500">
+                            <span class="ml-3 text-sm text-white">Attendance Details</span>
+                            <span class="ml-2 text-xs text-gray-400">(Individual trainee attendance per session)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="section_signature" value="1" checked
+                                class="w-4 h-4 text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500">
+                            <span class="ml-3 text-sm text-white">Signature Section</span>
+                            <span class="ml-2 text-xs text-gray-400">(Authorization signature area)</span>
+                        </label>
+                    </div>
+                    <div class="mt-2 flex gap-2">
+                        <button type="button" onclick="selectAllSections()" class="text-xs text-blue-400 hover:text-blue-300">Select All</button>
+                        <span class="text-gray-500">|</span>
+                        <button type="button" onclick="deselectAllSections()" class="text-xs text-blue-400 hover:text-blue-300">Deselect All</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-800 px-6 py-4 border-t border-gray-700 flex justify-end gap-3">
+                <button onclick="closeExportModal()" 
+                    class="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                    Cancel
+                </button>
+                <button onclick="executeExport()" 
+                    class="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+                    Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Store all sessions for modal selection
+    let allSessionsData = [];
+    let selectedSessionsInModal = new Set();
+    
+    // Collect session data from the table
+    function collectSessionData() {
+        allSessionsData = [];
+        const rows = document.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const titleEl = row.querySelector('td:first-child .font-medium');
+            const dateEl = row.querySelector('td:nth-child(2) .text-white');
+            const typeEl = row.querySelector('td:first-child .text-xs.text-gray-500');
+            const attendanceLink = row.querySelector('a[href*="/attendance/sessions/"][href*="/attendance/"]');
+            
+            if (titleEl && attendanceLink) {
+                // Extract session ID from the attendance link
+                const href = attendanceLink.getAttribute('href');
+                const match = href.match(/\/sessions\/(\d+)\/attendance/);
+                if (match) {
+                    allSessionsData.push({
+                        id: match[1],
+                        title: titleEl.textContent.trim(),
+                        date: dateEl ? dateEl.textContent.trim() : '',
+                        type: typeEl ? typeEl.textContent.trim() : ''
+                    });
+                }
+            }
+        });
+    }
+    
+    // Modal functions
+    function openExportModal() {
+        const modal = document.getElementById('exportModal');
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        
+        // Collect session data
+        collectSessionData();
+        
+        // Reset selection
+        selectedSessionsInModal = new Set();
+        
+        // Update UI
+        updateSessionSelectionMode();
+        updatePdfSectionsVisibility();
+    }
+    
+    function closeExportModal() {
+        const modal = document.getElementById('exportModal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+    
+    function updateSessionSelectionMode() {
+        const mode = document.querySelector('input[name="session_selection_mode"]:checked')?.value;
+        const container = document.getElementById('sessionSelectionContainer');
+        
+        if (mode === 'selected') {
+            container.classList.remove('hidden');
+            populateSessionList();
+            updateSelectedSessionTags();
+            updateSelectedSessionCount();
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+    
+    function populateSessionList() {
+        const listContainer = document.getElementById('sessionListForSelection');
+        const searchInput = document.getElementById('sessionSearchInput');
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+        
+        let filteredSessions = allSessionsData;
+        if (searchTerm) {
+            filteredSessions = allSessionsData.filter(s => 
+                s.title.toLowerCase().includes(searchTerm) || 
+                s.date.toLowerCase().includes(searchTerm) ||
+                s.type.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        if (filteredSessions.length === 0) {
+            listContainer.innerHTML = '';
+            document.getElementById('noSessionsFound').classList.remove('hidden');
+            return;
+        }
+        
+        document.getElementById('noSessionsFound').classList.add('hidden');
+        
+        listContainer.innerHTML = filteredSessions.map(session => `
+            <label class="flex items-center p-3 hover:bg-gray-600/50 cursor-pointer transition-colors">
+                <input type="checkbox" class="modal-session-checkbox w-4 h-4 text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500"
+                    value="${session.id}" 
+                    ${selectedSessionsInModal.has(session.id) ? 'checked' : ''}
+                    onchange="toggleSessionInModal('${session.id}')">
+                <div class="ml-3 flex-1">
+                    <div class="text-sm font-medium text-white">${session.title}</div>
+                    <div class="text-xs text-gray-400">${session.date} - ${session.type}</div>
+                </div>
+            </label>
+        `).join('');
+    }
+    
+    function filterSessionList() {
+        populateSessionList();
+    }
+    
+    function toggleSessionInModal(sessionId) {
+        if (selectedSessionsInModal.has(sessionId)) {
+            selectedSessionsInModal.delete(sessionId);
+        } else {
+            selectedSessionsInModal.add(sessionId);
+        }
+        updateSelectedSessionTags();
+        updateSelectedSessionCount();
+    }
+    
+    function updateSelectedSessionTags() {
+        const tagsContainer = document.getElementById('selectedSessionTags');
+        
+        if (selectedSessionsInModal.size === 0) {
+            tagsContainer.innerHTML = '<span class="text-gray-500 text-sm">No sessions selected</span>';
+            return;
+        }
+        
+        const tags = Array.from(selectedSessionsInModal).map(id => {
+            const session = allSessionsData.find(s => s.id === id);
+            if (!session) return '';
+            return `
+                <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-600/20 text-blue-300 rounded-full text-xs">
+                    ${session.title}
+                    <button type="button" onclick="removeSessionFromModal('${id}')" class="hover:text-white">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </span>
+            `;
+        }).join('');
+        
+        tagsContainer.innerHTML = tags;
+    }
+    
+    function updateSelectedSessionCount() {
+        document.getElementById('selectedSessionCount').textContent = selectedSessionsInModal.size;
+    }
+    
+    function removeSessionFromModal(sessionId) {
+        selectedSessionsInModal.delete(sessionId);
+        updateSelectedSessionTags();
+        updateSelectedSessionCount();
+        
+        // Update checkbox in list
+        const checkbox = document.querySelector(`.modal-session-checkbox[value="${sessionId}"]`);
+        if (checkbox) checkbox.checked = false;
+    }
+    
+    function selectAllSessionsInModal() {
+        const searchInput = document.getElementById('sessionSearchInput');
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+        
+        let sessionsToSelect = allSessionsData;
+        if (searchTerm) {
+            sessionsToSelect = allSessionsData.filter(s => 
+                s.title.toLowerCase().includes(searchTerm) || 
+                s.date.toLowerCase().includes(searchTerm) ||
+                s.type.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        sessionsToSelect.forEach(s => selectedSessionsInModal.add(s.id));
+        populateSessionList();
+        updateSelectedSessionTags();
+        updateSelectedSessionCount();
+    }
+    
+    function clearAllSessionsInModal() {
+        selectedSessionsInModal.clear();
+        populateSessionList();
+        updateSelectedSessionTags();
+        updateSelectedSessionCount();
+    }
+    
+    function updatePdfSectionsVisibility() {
+        const format = document.querySelector('input[name="modal_format"]:checked')?.value;
+        const sectionsContainer = document.getElementById('pdfSectionsContainer');
+        
+        if (format === 'pdf') {
+            sectionsContainer.classList.remove('opacity-50', 'pointer-events-none');
+        } else {
+            sectionsContainer.classList.add('opacity-50', 'pointer-events-none');
+        }
+    }
+    
+    // Listen for format change
+    document.querySelectorAll('input[name="modal_format"]').forEach(radio => {
+        radio.addEventListener('change', updatePdfSectionsVisibility);
+    });
+    
+    function selectAllSections() {
+        document.querySelectorAll('#pdfSectionsContainer input[type="checkbox"]').forEach(cb => cb.checked = true);
+    }
+    
+    function deselectAllSections() {
+        document.querySelectorAll('#pdfSectionsContainer input[type="checkbox"]').forEach(cb => cb.checked = false);
+    }
+    
+    function executeExport() {
+        // Get format
+        const fileFormat = document.querySelector('input[name="modal_format"]:checked')?.value || 'pdf';
+        const selectionMode = document.querySelector('input[name="session_selection_mode"]:checked')?.value || 'all';
+        
+        // Get date range
+        const dateFrom = document.getElementById('export_date_from')?.value || '';
+        const dateTo = document.getElementById('export_date_to')?.value || '';
+        
+        // Build URL parameters
+        let params = `format=${fileFormat}`;
+        
+        // Add date filters
+        if (dateFrom) params += `&date_from=${dateFrom}`;
+        if (dateTo) params += `&date_to=${dateTo}`;
+        
+        // Get session IDs based on selection mode
+        if (selectionMode === 'selected' && selectedSessionsInModal.size > 0) {
+            params += `&session_ids=${Array.from(selectedSessionsInModal).join(',')}`;
+        }
+        
+        // Add section filters for PDF
+        if (fileFormat === 'pdf') {
+            const sections = [];
+            if (document.querySelector('input[name="section_header"]')?.checked) sections.push('header');
+            if (document.querySelector('input[name="section_summary"]')?.checked) sections.push('summary');
+            if (document.querySelector('input[name="section_sessions"]')?.checked) sections.push('sessions');
+            if (document.querySelector('input[name="section_details"]')?.checked) sections.push('details');
+            if (document.querySelector('input[name="section_signature"]')?.checked) sections.push('signature');
+            
+            if (sections.length > 0) {
+                params += `&sections=${sections.join(',')}`;
+            }
+        }
+        
+        // Navigate to export URL
+        window.location.href = `{% url 'session_attendance_export' %}?${params}`;
+        
+        // Close modal
+        closeExportModal();
+    }
+    
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeExportModal();
+        }
+    });
+</script>
+{% endblock %}

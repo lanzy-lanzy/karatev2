@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Archived Matchmaking - BlackCobra Karate Club{% endblock %}
+
+{% block page_title %}Archived Matchmaking{% endblock %}
+
+{% block content %}
+<style>
+    .admin-matchmaking-container {
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        min-height: calc(100vh - 120px);
+        padding: 2rem;
+        margin: -1.5rem;
+        border-radius: 0;
+    }
+
+    .gradient-text {
+        background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .filter-container {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .filter-select {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        color: #fff;
+        padding: 0.875rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-select:focus {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(239, 68, 68, 0.5);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+
+    .filter-select option {
+        background: #1f2937;
+        color: #fff;
+    }
+
+    .back-btn {
+        background: rgba(255, 255, 255, 0.1);
+        color: #e5e7eb;
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    @media (max-width: 640px) {
+        .admin-matchmaking-container {
+            padding: 1rem;
+        }
+    }
+</style>
+
+<div class="admin-matchmaking-container">
+    <!-- Header with Back Button -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h1 class="gradient-text" style="font-size: 2.25rem; font-weight: 800; margin: 0 0 0.5rem 0; display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 2.25rem;">📦</span> Archived Matchmaking
+                </h1>
+                <p style="font-size: 1rem; color: #9ca3af; margin: 0;">View and manage archived matches</p>
+            </div>
+            <a href="{% url 'admin_matchmaking' %}" class="back-btn">
+                <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back to Matchmaking
+            </a>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                <!-- Event Filter -->
+                <div>
+                    <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #e5e7eb; margin-bottom: 0.5rem;">Event Filter</label>
+                    <select name="event_filter"
+                            class="filter-select"
+                            style="width: 100%;"
+                            hx-get="{% url 'admin_archived_matchmaking_partial' %}"
+                            hx-trigger="change"
+                            hx-target="#match-list"
+                            hx-swap="innerHTML"
+                            hx-include="[name='status_filter']">
+                        <option value="">All Events</option>
+                        {% for event in all_events %}
+                        <option value="{{ event.id }}">{{ event.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Status Filter -->
+                <div>
+                    <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #e5e7eb; margin-bottom: 0.5rem;">Status Filter</label>
+                    <select name="status_filter"
+                            class="filter-select"
+                            style="width: 100%;"
+                            hx-get="{% url 'admin_archived_matchmaking_partial' %}"
+                            hx-trigger="change"
+                            hx-target="#match-list"
+                            hx-swap="innerHTML"
+                            hx-include="[name='event_filter']">
+                        <option value="">All Status</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="ongoing">Ongoing</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Match List -->
+    <div id="match-list">
+        {% include "admin/matchmaking/archived_partial.html" %}
+    </div>
+</div>
+{% endblock %}

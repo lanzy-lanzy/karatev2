@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BlackCobra Karate Club Management System">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}BlackCobra Karate Club{% endblock %}</title>
+    
+    <!-- TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- HTMX CDN -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- HTMX CSRF Configuration -->
+    <script>
+        document.addEventListener('htmx:configRequest', function(evt) {
+            evt.detail.headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]').content;
+        });
+    </script>
+    
+    <!-- AlpineJS CDN -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <style>
+        /* Loading indicator styles */
+        .htmx-indicator {
+            display: none;
+        }
+        .htmx-request .htmx-indicator {
+            display: inline-flex;
+        }
+        .htmx-request.htmx-indicator {
+            display: inline-flex;
+        }
+        
+        /* Spinner animation */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Toast animations */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        .toast-enter {
+            animation: slideIn 0.3s ease-out;
+        }
+        .toast-exit {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+
+        /* Gradient Text for Headings */
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Primary Button Styling */
+        .btn-primary {
+            background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Feature Card Animation */
+        .feature-card {
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Glass Effect */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Header Styles */
+        .header-top {
+            background: linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            border-bottom: 2px solid transparent;
+            border-image: linear-gradient(90deg, #3b82f6, #1e40af) 1;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1);
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .header-btn {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .header-btn:hover {
+            background: rgba(59, 130, 246, 0.15);
+        }
+
+        .user-avatar {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .user-avatar::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .user-menu {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .user-menu-item {
+            transition: all 0.3s ease;
+            position: relative;
+            padding-left: 1.25rem;
+        }
+
+        .user-menu-item:hover {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+        }
+
+        .user-menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 0;
+            background: linear-gradient(180deg, #3b82f6, #1e40af);
+            transition: height 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .user-menu-item:hover::before {
+            height: 20px;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-900 min-h-screen" x-data="{ sidebarOpen: false }">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" 
+         x-data="{ 
+             toasts: [],
+             addToast(message, type = 'success') {
+                 const id = Date.now();
+                 this.toasts.push({ id, message, type });
+                 setTimeout(() => this.removeToast(id), 5000);
+             },
+             removeToast(id) {
+                 const index = this.toasts.findIndex(t => t.id === id);
+                 if (index > -1) {
+                     this.toasts.splice(index, 1);
+                 }
+             }
+         }"
+         @show-toast.window="addToast($event.detail.message, $event.detail.type)"
+         class="fixed top-4 right-4 z-50 space-y-2">
+        <template x-for="toast in toasts" :key="toast.id">
+            <div x-show="true"
+                 x-transition:enter="toast-enter"
+                 x-transition:leave="toast-exit"
+                 :class="{
+                     'bg-green-500': toast.type === 'success',
+                     'bg-red-500': toast.type === 'error',
+                     'bg-yellow-500': toast.type === 'warning',
+                     'bg-blue-500': toast.type === 'info'
+                 }"
+                 class="px-4 py-3 rounded-lg shadow-lg text-white flex items-center justify-between min-w-[300px]">
+                <span x-text="toast.message"></span>
+                <button @click="removeToast(toast.id)" class="ml-4 hover:opacity-75">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </template>
+    </div>
+
+    <!-- Global Loading Indicator -->
+    <div class="htmx-indicator fixed top-0 left-0 right-0 z-50">
+        <div class="h-1 bg-blue-500 animate-pulse"></div>
+    </div>
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        {% include "components/sidebar.html" %}
+        
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Bar -->
+            <header class="header-top px-4 py-4 flex items-center justify-between lg:px-6" style="height: 70px;">
+                <!-- Mobile menu button -->
+                <button @click="sidebarOpen = !sidebarOpen" 
+                        class="lg:hidden p-2 rounded-lg text-gray-400 header-btn focus:outline-none min-w-[44px] min-h-[44px] flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+                
+                <div class="flex-1 lg:flex-none">
+                    <h1 class="header-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                </div>
+                
+                <!-- Notification Widget -->
+                <div class="mr-4">
+                    {% include "components/notification_widget.html" %}
+                </div>
+                
+                <!-- User menu -->
+                <div x-data="{ open: false }" class="relative">
+                    <button @click="open = !open" 
+                            class="flex items-center space-x-3 p-2 rounded-lg header-btn min-w-[44px] min-h-[44px]">
+                        <!-- Profile Picture or Avatar -->
+                        <div class="user-avatar">
+                            {% if user.profile.profile_image %}
+                                <img src="{{ user.profile.profile_image.url }}" 
+                                     alt="{{ user.get_full_name }}"
+                                     class="w-9 h-9 rounded-full object-cover border-2 border-blue-500 shadow-lg">
+                            {% else %}
+                                <div class="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center shadow-lg">
+                                    <span class="text-white text-sm font-bold">
+                                        {% if user.first_name %}{{ user.first_name.0 }}{% else %}U{% endif %}
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Full Name instead of Username -->
+                        <span class="hidden sm:block text-sm text-white font-semibold">
+                            {% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}
+                        </span>
+                        
+                        <!-- Dropdown Arrow -->
+                        <svg class="w-4 h-4 text-gray-400 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                        </svg>
+                    </button>
+                    <div x-show="open" 
+                         @click.away="open = false"
+                         x-transition
+                         class="user-menu absolute right-0 mt-2 w-56 rounded-lg py-1 z-50">
+                        <div class="px-4 py-3 border-b border-gray-700">
+                            <p class="text-sm font-semibold text-white">{% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}</p>
+                            <p class="text-xs text-gray-400 mt-1">{{ user.email }}</p>
+                        </div>
+                        <a href="{% url 'trainee_profile' %}" class="user-menu-item block px-4 py-2.5 text-sm text-gray-300">View Profile</a>
+                        <a href="{% url 'trainee_profile_edit' %}" class="user-menu-item block px-4 py-2.5 text-sm text-gray-300">Edit Profile</a>
+                        <div class="border-t border-gray-700 my-1"></div>
+                        <a href="{% url 'logout' %}" class="user-menu-item block px-4 py-2.5 text-sm text-red-400 hover:text-red-300">Logout</a>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Page Content -->
+            <main class="flex-1 overflow-y-auto p-4 lg:p-6 bg-gray-900">
+                {% if messages %}
+                <div class="mb-4 space-y-2">
+                    {% for message in messages %}
+                    <div class="p-4 rounded-lg {% if message.tags == 'error' %}bg-red-500 bg-opacity-20 text-red-300 border border-red-500 border-opacity-30{% elif message.tags == 'success' %}bg-green-500 bg-opacity-20 text-green-300 border border-green-500 border-opacity-30{% else %}bg-blue-500 bg-opacity-20 text-blue-300 border border-blue-500 border-opacity-30{% endif %}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Loading Spinner Component (reusable) -->
+    <template id="loading-spinner">
+        <div class="htmx-indicator inline-flex items-center">
+            <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        </div>
+    </template>
+
+    <script>
+        // Mark all notifications as read
+        async function markAllAsRead() {
+            try {
+                const response = await fetch('{% url "mark_all_notifications_read" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    // Find and remove the badge
+                    const badge = document.querySelector('span.bg-red-600');
+                    if (badge) {
+                        badge.parentElement.removeChild(badge);
+                    }
+                    
+                    // Remove the "New" badges and blue background from notification items
+                    document.querySelectorAll('[id^="notif-item-"]').forEach(item => {
+                        item.classList.remove('bg-blue-50');
+                        const newBadge = item.querySelector('.bg-blue-100');
+                        if (newBadge) {
+                            newBadge.parentElement.removeChild(newBadge);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error marking notifications as read:', error);
+            }
+        }
+
+        // HTMX event handlers for toast notifications
+        document.body.addEventListener('htmx:afterRequest', function(evt) {
+            if (evt.detail.successful) {
+                const trigger = evt.detail.xhr.getResponseHeader('HX-Trigger');
+                if (trigger) {
+                    try {
+                        const triggers = JSON.parse(trigger);
+                        if (triggers.showToast) {
+                            window.dispatchEvent(new CustomEvent('show-toast', {
+                                detail: triggers.showToast
+                            }));
+                        }
+                    } catch (e) {
+                        // Not JSON, ignore
+                    }
+                }
+            }
+        });
+
+        document.body.addEventListener('htmx:responseError', function(evt) {
+            window.dispatchEvent(new CustomEvent('show-toast', {
+                detail: { message: 'An error occurred. Please try again.', type: 'error' }
+            }));
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

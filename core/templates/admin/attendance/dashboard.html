@@ -1,0 +1,484 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Management - BlackCobra Karate Club{% endblock %}
+
+{% block page_title %}Attendance Management{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header with Quick Actions -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <h2 class="text-3xl font-bold text-white">Attendance Dashboard</h2>
+            <p class="text-gray-400 mt-1">Track and manage session & event attendance</p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+            <button onclick="openQuickSessionModal()"
+                class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-semibold rounded-xl transition-all shadow-lg shadow-green-900/30">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Quick Session
+            </button>
+            <a href="{% url 'session_create' %}"
+                class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-900/30">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                New Session
+            </a>
+            <a href="{% url 'session_list' %}"
+                class="inline-flex items-center px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-all border border-gray-600">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                </svg>
+                All Sessions
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Today's Sessions -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-purple-900/50 to-purple-800/30 rounded-2xl p-6 border border-purple-700/50">
+            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
+            <div class="relative">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-purple-300 text-sm font-medium">Today's Sessions</h3>
+                    <div class="p-2 bg-purple-600/30 rounded-lg">
+                        <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-4xl font-bold text-white mb-1">{{ todays_sessions_count }}</div>
+                <p class="text-xs text-purple-300/70">{{ today|date:"l, M j" }}</p>
+            </div>
+        </div>
+
+        <!-- Weekly Sessions -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-blue-900/50 to-blue-800/30 rounded-2xl p-6 border border-blue-700/50">
+            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
+            <div class="relative">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-blue-300 text-sm font-medium">This Week</h3>
+                    <div class="p-2 bg-blue-600/30 rounded-lg">
+                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-4xl font-bold text-white mb-1">{{ weekly_sessions }}</div>
+                <p class="text-xs text-blue-300/70">Sessions scheduled</p>
+            </div>
+        </div>
+
+        <!-- Active Trainees -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-cyan-900/50 to-cyan-800/30 rounded-2xl p-6 border border-cyan-700/50">
+            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl"></div>
+            <div class="relative">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-cyan-300 text-sm font-medium">Active Trainees</h3>
+                    <div class="p-2 bg-cyan-600/30 rounded-lg">
+                        <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-4xl font-bold text-white mb-1">{{ active_trainees_count }}</div>
+                <p class="text-xs text-cyan-300/70">Ready to train</p>
+            </div>
+        </div>
+
+        <!-- Monthly Rate -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-green-900/50 to-green-800/30 rounded-2xl p-6 border border-green-700/50">
+            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-green-500/10 rounded-full blur-2xl"></div>
+            <div class="relative">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-green-300 text-sm font-medium">Monthly Rate</h3>
+                    <div class="p-2 bg-green-600/30 rounded-lg">
+                        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-4xl font-bold text-white mb-1">{{ monthly_rate }}%</div>
+                <div class="w-full bg-green-900/50 rounded-full h-1.5 mt-2">
+                    <div class="bg-green-500 h-1.5 rounded-full transition-all" style="width: {{ monthly_rate }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Today's Sessions -->
+        <div class="lg:col-span-2">
+            <div class="bg-gray-800/50 backdrop-blur rounded-2xl border border-gray-700 overflow-hidden">
+                <div class="p-5 border-b border-gray-700 flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-white flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Today's Sessions
+                    </h3>
+                    <span class="text-sm text-gray-400">{{ today|date:"M j, Y" }}</span>
+                </div>
+                
+                {% if todays_sessions %}
+                <div class="divide-y divide-gray-700/50">
+                    {% for session in todays_sessions %}
+                    <div class="p-5 hover:bg-gray-700/30 transition-colors">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex items-start gap-4">
+                                <div class="flex-shrink-0 w-16 text-center">
+                                    <div class="text-lg font-bold text-white">{{ session.start_time|time:"H:i" }}</div>
+                                    <div class="text-xs text-gray-500">{{ session.end_time|time:"H:i" }}</div>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-white">{{ session.title }}</h4>
+                                    <div class="flex flex-wrap items-center gap-2 mt-1 text-sm">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                            {% if session.session_type == 'regular' %}bg-blue-500/20 text-blue-300
+                                            {% elif session.session_type == 'special' %}bg-purple-500/20 text-purple-300
+                                            {% elif session.session_type == 'exam' %}bg-red-500/20 text-red-300
+                                            {% elif session.session_type == 'seminar' %}bg-amber-500/20 text-amber-300
+                                            {% else %}bg-gray-500/20 text-gray-300{% endif %}">
+                                            {{ session.get_session_type_display }}
+                                        </span>
+                                        <span class="text-gray-500">{{ session.location }}</span>
+                                        {% if session.instructor %}
+                                        <span class="text-gray-500">| {{ session.instructor }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                {% if session.status == 'completed' %}
+                                <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
+                                    {{ session.attendance_count }} Present
+                                </span>
+                                {% else %}
+                                <a href="{% url 'session_attendance' session.id %}"
+                                    class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors">
+                                    Mark Attendance
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-12 text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <h3 class="mt-3 text-lg font-medium text-gray-300">No sessions today</h3>
+                    <p class="mt-1 text-sm text-gray-500">Create a quick session to start marking attendance.</p>
+                    <button onclick="openQuickSessionModal()"
+                        class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Create Quick Session
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Recent Sessions History -->
+            <div class="mt-6 bg-gray-800/50 backdrop-blur rounded-2xl border border-gray-700 overflow-hidden">
+                <div class="p-5 border-b border-gray-700 flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-white flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Recent Sessions
+                    </h3>
+                    <a href="{% url 'session_list' %}" class="text-sm text-blue-400 hover:text-blue-300">View All</a>
+                </div>
+                
+                {% if recent_sessions %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-700/30 text-xs text-gray-400 uppercase">
+                            <tr>
+                                <th class="px-5 py-3 text-left">Session</th>
+                                <th class="px-5 py-3 text-left">Date & Time</th>
+                                <th class="px-5 py-3 text-center">Present</th>
+                                <th class="px-5 py-3 text-center">Absent</th>
+                                <th class="px-5 py-3 text-center">Rate</th>
+                                <th class="px-5 py-3 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-700/50">
+                            {% for session in recent_sessions %}
+                            <tr class="hover:bg-gray-700/30 transition-colors">
+                                <td class="px-5 py-4">
+                                    <div class="font-medium text-white">{{ session.title }}</div>
+                                    <div class="text-xs text-gray-500">{{ session.get_session_type_display }}</div>
+                                </td>
+                                <td class="px-5 py-4 text-sm text-gray-400">
+                                    <div>{{ session.date|date:"M j, Y" }}</div>
+                                    <div class="text-xs">{{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}</div>
+                                </td>
+                                <td class="px-5 py-4 text-center">
+                                    <span class="text-green-400 font-semibold">{{ session.present_count }}</span>
+                                </td>
+                                <td class="px-5 py-4 text-center">
+                                    <span class="text-red-400 font-semibold">{{ session.absent_count }}</span>
+                                </td>
+                                <td class="px-5 py-4 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <div class="w-16 bg-gray-700 rounded-full h-1.5">
+                                            <div class="h-1.5 rounded-full {% if session.attendance_rate >= 80 %}bg-green-500{% elif session.attendance_rate >= 50 %}bg-yellow-500{% else %}bg-red-500{% endif %}" 
+                                                style="width: {{ session.attendance_rate }}%"></div>
+                                        </div>
+                                        <span class="text-sm text-gray-300">{{ session.attendance_rate }}%</span>
+                                    </div>
+                                </td>
+                                <td class="px-5 py-4 text-center">
+                                    <span class="px-2 py-1 rounded-full text-xs font-medium
+                                        {% if session.status == 'completed' %}bg-green-500/20 text-green-400
+                                        {% elif session.status == 'ongoing' %}bg-blue-500/20 text-blue-400
+                                        {% elif session.status == 'scheduled' %}bg-gray-500/20 text-gray-400
+                                        {% else %}bg-red-500/20 text-red-400{% endif %}">
+                                        {{ session.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-8 text-center text-gray-500">
+                    No sessions recorded yet.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Upcoming Sessions -->
+            <div class="bg-gray-800/50 backdrop-blur rounded-2xl border border-gray-700 overflow-hidden">
+                <div class="p-5 border-b border-gray-700">
+                    <h3 class="text-lg font-bold text-white flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        Upcoming Sessions
+                    </h3>
+                </div>
+                {% if upcoming_sessions %}
+                <div class="divide-y divide-gray-700/50">
+                    {% for session in upcoming_sessions %}
+                    <div class="p-4 hover:bg-gray-700/30 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0 w-12 h-12 bg-gray-700 rounded-lg flex flex-col items-center justify-center">
+                                <span class="text-xs text-gray-400">{{ session.date|date:"M" }}</span>
+                                <span class="text-lg font-bold text-white">{{ session.date|date:"j" }}</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-medium text-white truncate">{{ session.title }}</h4>
+                                <p class="text-xs text-gray-500">{{ session.start_time|time:"H:i" }} | {{ session.location }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-6 text-center text-gray-500 text-sm">
+                    No upcoming sessions
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Upcoming Events -->
+            {% if upcoming_events %}
+            <div class="bg-gray-800/50 backdrop-blur rounded-2xl border border-gray-700 overflow-hidden">
+                <div class="p-5 border-b border-gray-700">
+                    <h3 class="text-lg font-bold text-white flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                        </svg>
+                        Upcoming Events
+                    </h3>
+                </div>
+                <div class="divide-y divide-gray-700/50">
+                    {% for event in upcoming_events %}
+                    <div class="p-4 hover:bg-gray-700/30 transition-colors">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="font-medium text-white">{{ event.name }}</h4>
+                                <p class="text-xs text-gray-500">{{ event.event_date|date:"M j, Y" }} | {{ event.location }}</p>
+                            </div>
+                            <a href="{% url 'event_attendance' event.id %}"
+                                class="px-2.5 py-1 bg-red-600/20 text-red-400 text-xs font-medium rounded-lg hover:bg-red-600/30 transition-colors">
+                                Attendance
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Top Attendees -->
+            <div class="bg-gray-800/50 backdrop-blur rounded-2xl border border-gray-700 overflow-hidden">
+                <div class="p-5 border-b border-gray-700">
+                    <h3 class="text-lg font-bold text-white flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                        </svg>
+                        Top Attendees
+                        <span class="ml-2 text-xs text-gray-500 font-normal">(30 days)</span>
+                    </h3>
+                </div>
+                {% if top_attendees %}
+                <div class="divide-y divide-gray-700/50">
+                    {% for trainee in top_attendees %}
+                    <div class="p-4 flex items-center gap-3">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white font-bold text-sm">
+                            {{ forloop.counter }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-medium text-white truncate">
+                                {{ trainee.profile.user.get_full_name|default:trainee.profile.user.username }}
+                            </h4>
+                            <p class="text-xs text-gray-500">{{ trainee.get_belt_rank_display }}</p>
+                        </div>
+                        <span class="text-green-400 font-semibold">{{ trainee.attendance_count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-6 text-center text-gray-500 text-sm">
+                    No attendance data yet
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Low Attendance Warning -->
+            {% if low_attendance_trainees %}
+            <div class="bg-gradient-to-br from-red-900/30 to-red-800/20 rounded-2xl border border-red-700/50 overflow-hidden">
+                <div class="p-5 border-b border-red-700/50">
+                    <h3 class="text-lg font-bold text-white flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        Low Attendance
+                    </h3>
+                </div>
+                <div class="divide-y divide-red-700/30">
+                    {% for trainee in low_attendance_trainees %}
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-white">
+                                {{ trainee.profile.user.get_full_name|default:trainee.profile.user.username }}
+                            </span>
+                            <span class="text-red-400 font-semibold">{{ trainee.attendance_rate }}%</span>
+                        </div>
+                        <div class="w-full bg-red-900/50 rounded-full h-1.5">
+                            <div class="bg-red-500 h-1.5 rounded-full" style="width: {{ trainee.attendance_rate }}%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">{{ trainee.sessions_attended }}/{{ trainee.total_sessions }} sessions</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Session Modal -->
+<div id="quickSessionModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" onclick="closeQuickSessionModal()"></div>
+        <div class="relative bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-md shadow-2xl">
+            <form action="{% url 'quick_session_create' %}" method="POST">
+                {% csrf_token %}
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-white">Quick Session</h3>
+                        <button type="button" onclick="closeQuickSessionModal()" class="text-gray-400 hover:text-white">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Session Title</label>
+                            <input type="text" name="title" value="Training Session" required
+                                class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Session Type</label>
+                            <select name="session_type"
+                                class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                                <option value="regular">Regular Training</option>
+                                <option value="special">Special Training</option>
+                                <option value="exam">Belt Examination</option>
+                                <option value="seminar">Seminar</option>
+                                <option value="workshop">Workshop</option>
+                            </select>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Date</label>
+                                <input type="date" name="date" value="{{ today|date:'Y-m-d' }}" required
+                                    class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Start Time</label>
+                                <input type="time" name="start_time" value="18:00" required
+                                    class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">End Time</label>
+                            <input type="time" name="end_time" value="20:00" required
+                                class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="px-6 py-4 bg-gray-700/50 border-t border-gray-700 flex justify-end gap-3 rounded-b-2xl">
+                    <button type="button" onclick="closeQuickSessionModal()"
+                        class="px-4 py-2 text-gray-300 hover:text-white font-medium">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-colors">
+                        Create & Mark Attendance
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openQuickSessionModal() {
+        document.getElementById('quickSessionModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeQuickSessionModal() {
+        document.getElementById('quickSessionModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeQuickSessionModal();
+    });
+</script>
+{% endblock %}

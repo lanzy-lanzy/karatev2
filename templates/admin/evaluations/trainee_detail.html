@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}{% if trainee.profile.user.get_full_name %}{{ trainee.profile.user.get_full_name }}{% else %}{{ trainee.profile.user.username }}{% endif %} Evaluations{% endblock %}
+
+{% block page_title %}Evaluations: {% if trainee.profile.user.get_full_name %}{{ trainee.profile.user.get_full_name }}{% else %}{{ trainee.profile.user.username }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Trainee Info Card -->
+    <div class="bg-gray-800 rounded-2xl border border-gray-700 p-6">
+        <div class="flex items-start justify-between">
+            <div>
+                 <h2 class="text-2xl font-bold text-white">{% if trainee.profile.user.get_full_name %}{{ trainee.profile.user.get_full_name }}{% else %}{{ trainee.profile.user.username }}{% endif %}</h2>
+                <div class="mt-2 space-y-1 text-gray-400">
+                    <p><strong>Belt:</strong> {{ trainee.get_belt_rank_display }}</p>
+                    <p><strong>Weight:</strong> {{ trainee.weight }} kg ({{ trainee.weight_class }})</p>
+                    <p><strong>Status:</strong> {{ trainee.get_status_display }}</p>
+                    <p><strong>Joined:</strong> {{ trainee.joined_date|date:"M d, Y" }}</p>
+                </div>
+            </div>
+            <a href="{% url 'admin_trainees' %}" class="px-4 py-2 rounded-lg bg-gray-700 text-white hover:bg-gray-600 transition-colors">
+                Back to Trainees
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Card -->
+    {% if evaluations %}
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 bg-opacity-10 rounded-lg border border-blue-500 border-opacity-30 p-4">
+            <p class="text-sm text-blue-300 mb-2">Total Evaluations</p>
+            <p class="text-3xl font-bold text-blue-100">{{ evaluations|length }}</p>
+        </div>
+        
+        <div class="bg-gradient-to-br from-green-500 to-green-600 bg-opacity-10 rounded-lg border border-green-500 border-opacity-30 p-4">
+            <p class="text-sm text-green-300 mb-2">Latest Rating</p>
+            <p class="text-3xl font-bold text-green-100">{{ evaluations.0.overall_rating }}/5</p>
+        </div>
+        
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 bg-opacity-10 rounded-lg border border-purple-500 border-opacity-30 p-4">
+             <p class="text-sm text-purple-300 mb-2">Average Rating</p>
+             <p class="text-3xl font-bold text-purple-100">
+                 {% if evaluations|length > 0 %}
+                     {% load humanize %}
+                     {% with total_rating=0 %}
+                         {% for eval in evaluations %}
+                             {% widthratio eval.overall_rating 1 5 as rating_pct %}
+                         {% endfor %}
+                     {% endwith %}
+                     {{ avg_rating|default:"N/A" }}
+                 {% else %}
+                     N/A
+                 {% endif %}
+             </p>
+         </div>
+        
+        <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 bg-opacity-10 rounded-lg border border-yellow-500 border-opacity-30 p-4">
+            <p class="text-sm text-yellow-300 mb-2">Last Evaluated</p>
+            <p class="text-lg font-bold text-yellow-100">{{ evaluations.0.evaluated_at|date:"M d, Y" }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Evaluations Timeline -->
+    {% if evaluations %}
+    <div class="bg-gray-800 rounded-2xl border border-gray-700 p-6">
+        <h3 class="text-xl font-bold text-white mb-6">Evaluation History</h3>
+        
+        <div class="space-y-4">
+            {% for evaluation in evaluations %}
+            <div class="bg-gray-700 rounded-lg p-5 border border-gray-600 hover:border-gray-500 transition-colors">
+                <div class="flex items-start justify-between mb-3">
+                    <div>
+                        <p class="text-sm text-gray-400">{{ evaluation.evaluated_at|date:"M d, Y \a\t H:i" }}</p>
+                        {% if evaluation.evaluator %}
+                        <p class="text-sm text-gray-400">By {% if evaluation.evaluator.get_full_name %}{{ evaluation.evaluator.get_full_name }}{% else %}{{ evaluation.evaluator.username }}{% endif %}</p>
+                        {% endif %}
+                    </div>
+                    <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold
+                        {% if evaluation.overall_rating == 5 %}bg-green-500 bg-opacity-20 text-green-300
+                        {% elif evaluation.overall_rating == 4 %}bg-blue-500 bg-opacity-20 text-blue-300
+                        {% elif evaluation.overall_rating == 3 %}bg-yellow-500 bg-opacity-20 text-yellow-300
+                        {% elif evaluation.overall_rating == 2 %}bg-orange-500 bg-opacity-20 text-orange-300
+                        {% else %}bg-red-500 bg-opacity-20 text-red-300{% endif %}">
+                        Overall: {{ evaluation.overall_rating }}/5
+                    </span>
+                </div>
+
+                <!-- Rating Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 mb-4">
+                    <div class="text-center">
+                        <p class="text-xs text-gray-400">Technique</p>
+                        <p class="text-sm font-bold text-blue-400">{{ evaluation.technique }}</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs text-gray-400">Speed</p>
+                        <p class="text-sm font-bold text-purple-400">{{ evaluation.speed }}</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs text-gray-400">Strength</p>
+                        <p class="text-sm font-bold text-red-400">{{ evaluation.strength }}</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs text-gray-400">Flexibility</p>
+                        <p class="text-sm font-bold text-green-400">{{ evaluation.flexibility }}</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs text-gray-400">Discipline</p>
+                        <p class="text-sm font-bold text-yellow-400">{{ evaluation.discipline }}</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs text-gray-400">Spirit</p>
+                        <p class="text-sm font-bold text-orange-400">{{ evaluation.spirit }}</p>
+                    </div>
+                </div>
+
+                {% if evaluation.comments %}
+                <div class="mb-3 pb-3 border-b border-gray-600">
+                    <p class="text-xs font-semibold text-gray-400 mb-1">Comments</p>
+                    <p class="text-sm text-gray-300">{{ evaluation.comments }}</p>
+                </div>
+                {% endif %}
+
+                {% if evaluation.strengths %}
+                <div class="mb-3 pb-3 border-b border-gray-600">
+                    <p class="text-xs font-semibold text-green-400 mb-1">Strengths</p>
+                    <p class="text-sm text-gray-300">{{ evaluation.strengths }}</p>
+                </div>
+                {% endif %}
+
+                {% if evaluation.areas_for_improvement %}
+                <div class="mb-3 pb-3 border-b border-gray-600">
+                    <p class="text-xs font-semibold text-yellow-400 mb-1">Areas for Improvement</p>
+                    <p class="text-sm text-gray-300">{{ evaluation.areas_for_improvement }}</p>
+                </div>
+                {% endif %}
+
+                {% if evaluation.recommendations %}
+                <div class="mb-3">
+                    <p class="text-xs font-semibold text-blue-400 mb-1">Recommendations</p>
+                    <p class="text-sm text-gray-300">{{ evaluation.recommendations }}</p>
+                </div>
+                {% endif %}
+
+                <div class="flex gap-2 mt-4">
+                    <a href="{% url 'admin_evaluation_edit' evaluation.id %}" class="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors">
+                        Edit
+                    </a>
+                    <button 
+                        hx-get="{% url 'admin_evaluation_delete' evaluation.id %}"
+                        hx-target="body"
+                        class="px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors">
+                        Delete
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-gray-800 rounded-2xl border border-gray-700 p-12 text-center">
+        <svg class="mx-auto h-12 w-12 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <h3 class="text-lg font-semibold text-gray-300 mb-2">No Evaluations Yet</h3>
+        <p class="text-gray-400 mb-4">Create an evaluation to track this trainee's progress.</p>
+        <a href="{% url 'admin_evaluation_add' %}" class="inline-block px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors">
+            Create Evaluation
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

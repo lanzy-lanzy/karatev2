@@ -1,0 +1,437 @@
+<style>
+    .events-table-container {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+    .events-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .events-table thead {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(249, 115, 22, 0.15));
+        border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .events-table th {
+        padding: 1rem 1.25rem;
+        text-align: left;
+        font-weight: 800;
+        color: #fff;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .events-table tbody tr {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .events-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .events-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .events-table td {
+        padding: 1rem 1.25rem;
+        color: #e5e7eb;
+        font-size: 0.9rem;
+    }
+
+    .event-name-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .event-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #9ca3af, #6b7280);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(156, 163, 175, 0.3);
+    }
+
+    .event-name-link {
+        color: #e5e7eb;
+        font-weight: 600;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .event-name-link:hover {
+        color: #fff;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        white-space: nowrap;
+    }
+
+    .status-draft { background: linear-gradient(135deg, #6b7280, #4b5563); color: white; }
+    .status-open { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+    .status-closed { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+    .status-ongoing { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+    .status-completed { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; }
+    .status-cancelled { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+
+    .date-cell {
+        color: #d1d5db;
+    }
+
+    .location-cell {
+        color: #d1d5db;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .capacity-cell {
+        color: #d1d5db;
+    }
+
+    .progress-bar {
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 0.25rem;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ef4444, #f97316);
+        border-radius: 2px;
+        transition: width 0.5s ease;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .action-btn {
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+    }
+
+    .btn-view {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .btn-view:hover {
+        background: rgba(59, 130, 246, 0.25);
+        border-color: rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-restore {
+        background: rgba(16, 185, 129, 0.15);
+        color: #6ee7b7;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-restore:hover {
+        background: rgba(16, 185, 129, 0.25);
+        border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 20px;
+        border: 2px dashed rgba(255, 255, 255, 0.1);
+    }
+
+    @media (max-width: 1024px) {
+        .events-table th,
+        .events-table td {
+            padding: 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .location-cell {
+            max-width: 120px;
+        }
+
+        .action-btn {
+            padding: 0.4rem 0.6rem;
+            font-size: 0.7rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .events-table-container {
+            display: none;
+        }
+
+        .event-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .event-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .event-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(239, 68, 68, 0.2);
+        }
+
+        .event-header {
+            background: linear-gradient(135deg, rgba(156, 163, 175, 0.15), rgba(107, 114, 128, 0.15));
+            padding: 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .event-body {
+            padding: 1.25rem;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: rgba(156, 163, 175, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            flex-shrink: 0;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+    }
+</style>
+
+<!-- Archived Event List Partial -->
+{% if events %}
+    <!-- Desktop Table View -->
+    <div class="events-table-container">
+        <table class="events-table">
+            <thead>
+                <tr>
+                    <th>Event Name</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Location</th>
+                    <th>Participants</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td>
+                        <div class="event-name-cell">
+                            <div class="event-icon">📦</div>
+                            <span class="event-name-link">
+                                {{ event.name }}
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ event.status }}">
+                            {% if event.status == 'draft' %}
+                                📝 Draft
+                            {% elif event.status == 'open' %}
+                                ✅ Open
+                            {% elif event.status == 'closed' %}
+                                🔒 Closed
+                            {% elif event.status == 'ongoing' %}
+                                ⚡ Live
+                            {% elif event.status == 'completed' %}
+                                ✓ Done
+                            {% elif event.status == 'cancelled' %}
+                                ✗ Cancelled
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td class="date-cell">
+                        {{ event.event_date|date:"M d, Y" }}
+                    </td>
+                    <td class="location-cell" title="{{ event.location }}">
+                        {{ event.location }}
+                    </td>
+                    <td class="capacity-cell">
+                        <div>{{ event.participant_count }}/{{ event.max_participants }}</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: {% widthratio event.participant_count event.max_participants 100 %}%;"></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'admin_event_detail' event.id %}" class="action-btn btn-view">
+                                View
+                            </a>
+                            <form method="POST" action="{% url 'admin_event_restore' event.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="action-btn btn-restore"
+                                        onclick="if(!confirm('Restore this event?')) return false;">
+                                    Restore
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Mobile Card View -->
+    <div class="event-grid" style="display: none;">
+        {% for event in events %}
+        <div class="event-card">
+            <div class="event-header">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
+                        <div class="event-icon">📦</div>
+                        <span style="font-size: 1rem; font-weight: 800; color: #fff;">
+                            {{ event.name }}
+                        </span>
+                    </div>
+                    <span class="status-badge status-{{ event.status }}" style="flex-shrink: 0;">
+                        {% if event.status == 'draft' %}
+                            📝 Draft
+                        {% elif event.status == 'open' %}
+                            ✅ Open
+                        {% elif event.status == 'closed' %}
+                            🔒 Closed
+                        {% elif event.status == 'ongoing' %}
+                            ⚡ Live
+                        {% elif event.status == 'completed' %}
+                            ✓ Done
+                        {% elif event.status == 'cancelled' %}
+                            ✗ Cancelled
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <div class="event-body">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <div class="info-row">
+                        <div class="info-icon">
+                            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: #fff;">{{ event.event_date|date:"M d, Y" }}</div>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-icon">
+                            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            </svg>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: #fff;">{{ event.location }}</div>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-icon">
+                            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: #fff; margin-bottom: 0.25rem;">{{ event.participant_count }}/{{ event.max_participants }}</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: {% widthratio event.participant_count event.max_participants 100 %}%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="{% url 'admin_event_detail' event.id %}" class="action-btn btn-view">
+                        View
+                    </a>
+                    <form method="POST" action="{% url 'admin_event_restore' event.id %}" style="display: inline; width: 100%;">
+                        {% csrf_token %}
+                        <button type="submit" 
+                                class="action-btn btn-restore"
+                                style="width: 100%;"
+                                onclick="if(!confirm('Restore this event?')) return false;">
+                            Restore
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+        <div style="font-size: 5rem; margin-bottom: 1.5rem;">📦</div>
+        <h3 style="font-size: 1.75rem; font-weight: 800; color: #fff; margin-bottom: 0.75rem;">No Archived Events</h3>
+        <p style="color: #9ca3af; margin: 0; font-size: 1rem;">Archive events to store them here.</p>
+    </div>
+{% endif %}

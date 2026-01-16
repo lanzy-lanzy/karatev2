@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Trainee Evaluations - BlackCobra Karate Club{% endblock %}
+
+{% block page_title %}Trainee Evaluations{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Filter and Action Bar -->
+    <div class="bg-gray-800 rounded-2xl border border-gray-700 p-6">
+        <div class="flex flex-col lg:flex-row gap-4 items-end justify-between mb-4">
+            <div class="flex-1">
+                <label class="text-sm font-semibold text-gray-300 mb-2 block">Search Trainee</label>
+                <input 
+                    type="text" 
+                    id="search-input"
+                    placeholder="Search by name or username..." 
+                    class="w-full px-4 py-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    hx-get="{% url 'admin_evaluation_list_partial' %}"
+                    hx-target="#evaluations-list"
+                    hx-trigger="keyup changed delay:500ms"
+                    name="search">
+            </div>
+            
+            <div class="flex gap-2">
+                <select 
+                    class="px-4 py-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    hx-get="{% url 'admin_evaluation_list_partial' %}"
+                    hx-target="#evaluations-list"
+                    hx-trigger="change"
+                    name="status_filter">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="completed">Completed</option>
+                </select>
+                
+                <select 
+                    class="px-4 py-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    hx-get="{% url 'admin_evaluation_list_partial' %}"
+                    hx-target="#evaluations-list"
+                    hx-trigger="change"
+                    name="rating_filter">
+                    <option value="">All Ratings</option>
+                    <option value="1">Poor</option>
+                    <option value="2">Fair</option>
+                    <option value="3">Good</option>
+                    <option value="4">Very Good</option>
+                    <option value="5">Excellent</option>
+                </select>
+                
+                <a href="{% url 'admin_evaluation_add' %}" class="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    New Evaluation
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Evaluations List -->
+    <div id="evaluations-list">
+        {% include "admin/evaluations/list_partial.html" %}
+    </div>
+</div>
+
+<script>
+    // Sync search input with HTMX requests
+    document.getElementById('search-input').addEventListener('change', function() {
+        const search = this.value;
+        const statusFilter = document.querySelector('select[name="status_filter"]').value;
+        const ratingFilter = document.querySelector('select[name="rating_filter"]').value;
+        
+        let url = '{% url "admin_evaluation_list_partial" %}?search=' + encodeURIComponent(search);
+        if (statusFilter) url += '&status_filter=' + statusFilter;
+        if (ratingFilter) url += '&rating_filter=' + ratingFilter;
+        
+        htmx.ajax('GET', url, '#evaluations-list');
+    });
+</script>
+{% endblock %}
