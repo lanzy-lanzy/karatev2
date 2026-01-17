@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+
+{% block title %}Match Detail - BlackCobra Karate Club{% endblock %}
+
+{% block page_title %}Match Detail{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-4xl font-bold gradient-text">Match Detail</h2>
+            <p class="text-sm text-gray-400 mt-2">{{ match.event.name }} - {{ match.scheduled_time|date:"M d, Y H:i" }}</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <a href="{% url 'admin_match_monitor' %}" 
+               class="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-gray-300 bg-gray-700 rounded-lg hover:bg-gray-600 transition-all">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back to Monitor
+            </a>
+            <a href="{% url 'admin_match_edit' match.id %}" 
+               class="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-white btn-primary rounded-lg">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+                Edit Match
+            </a>
+        </div>
+    </div>
+
+    <!-- Match Status Banner -->
+    <div class="glass-effect rounded-2xl border border-gray-700 p-6">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+            <div class="flex items-center gap-4">
+                <!-- Match Type Badges -->
+                {% if match.match_type == "sparring" %}
+                <span class="px-4 py-2 text-sm font-semibold bg-red-500/20 text-red-400 rounded-full">Sparring</span>
+                {% elif match.match_type == "penan" %}
+                <span class="px-4 py-2 text-sm font-semibold bg-blue-500/20 text-blue-400 rounded-full">Penan</span>
+                {% elif match.match_type == "judo" %}
+                <span class="px-4 py-2 text-sm font-semibold bg-green-500/20 text-green-400 rounded-full">Judo</span>
+                {% elif match.match_type == "breaking" %}
+                <span class="px-4 py-2 text-sm font-semibold bg-purple-500/20 text-purple-400 rounded-full">Breaking</span>
+                {% endif %}
+                
+                {% if match.is_promotion_match %}
+                <span class="px-4 py-2 text-sm font-semibold bg-orange-500/20 text-orange-400 rounded-full">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                    </svg>
+                    Promotion Match
+                </span>
+                {% endif %}
+            </div>
+            
+            <!-- Status Badge -->
+            {% if match.status == "scheduled" %}
+            <span class="px-4 py-2 text-sm font-semibold bg-yellow-500/20 text-yellow-400 rounded-full">Scheduled</span>
+            {% elif match.status == "ongoing" %}
+            <span class="px-4 py-2 text-sm font-semibold bg-purple-500/20 text-purple-400 rounded-full animate-pulse">Ongoing</span>
+            {% elif match.status == "completed" %}
+            <span class="px-4 py-2 text-sm font-semibold bg-green-500/20 text-green-400 rounded-full">Completed</span>
+            {% elif match.status == "cancelled" %}
+            <span class="px-4 py-2 text-sm font-semibold bg-red-500/20 text-red-400 rounded-full">Cancelled</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Main Match Card -->
+    <div class="glass-effect rounded-2xl border border-gray-700 overflow-hidden">
+        <div class="p-8">
+            <!-- Competitors Face-off -->
+            <div class="flex items-center justify-center gap-4 sm:gap-8 mb-8">
+                <!-- Competitor 1 -->
+                <div class="text-center flex-1 max-w-xs">
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-2xl sm:text-3xl font-bold {% if match.winner == match.competitor1 %}ring-4 ring-green-400{% endif %}">
+                        {{ match.competitor1.profile.user.first_name|slice:":1" }}{{ match.competitor1.profile.user.last_name|slice:":1" }}
+                    </div>
+                    <h3 class="text-lg sm:text-xl font-bold {% if match.winner == match.competitor1 %}text-green-400{% else %}text-white{% endif %}">
+                        {{ match.competitor1.profile.user.get_full_name|default:match.competitor1.profile.user.username }}
+                    </h3>
+                    <p class="text-sm text-gray-400">{{ match.competitor1.belt_rank|title }} Belt</p>
+                    <p class="text-xs text-gray-500">{{ match.competitor1.weight }} kg - {{ match.competitor1.weight_class }}</p>
+                    
+                    {% if judge_results %}
+                    <div class="mt-4">
+                        <div class="text-4xl sm:text-5xl font-bold {% if c1_votes > c2_votes %}text-green-400{% else %}text-white{% endif %}">
+                            {{ c1_votes }}
+                        </div>
+                        <div class="text-xs text-gray-400">votes</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if match.winner == match.competitor1 %}
+                    <div class="mt-2 flex items-center justify-center gap-1">
+                        <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                        <span class="text-sm font-semibold text-yellow-400">WINNER</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- VS Divider -->
+                <div class="flex flex-col items-center">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-800 border-4 border-gray-700 flex items-center justify-center">
+                        <span class="text-xl sm:text-2xl font-bold text-gray-400">VS</span>
+                    </div>
+                </div>
+                
+                <!-- Competitor 2 -->
+                <div class="text-center flex-1 max-w-xs">
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-2xl sm:text-3xl font-bold {% if match.winner == match.competitor2 %}ring-4 ring-green-400{% endif %}">
+                        {{ match.competitor2.profile.user.first_name|slice:":1" }}{{ match.competitor2.profile.user.last_name|slice:":1" }}
+                    </div>
+                    <h3 class="text-lg sm:text-xl font-bold {% if match.winner == match.competitor2 %}text-green-400{% else %}text-white{% endif %}">
+                        {{ match.competitor2.profile.user.get_full_name|default:match.competitor2.profile.user.username }}
+                    </h3>
+                    <p class="text-sm text-gray-400">{{ match.competitor2.belt_rank|title }} Belt</p>
+                    <p class="text-xs text-gray-500">{{ match.competitor2.weight }} kg - {{ match.competitor2.weight_class }}</p>
+                    
+                    {% if judge_results %}
+                    <div class="mt-4">
+                        <div class="text-4xl sm:text-5xl font-bold {% if c2_votes > c1_votes %}text-green-400{% else %}text-white{% endif %}">
+                            {{ c2_votes }}
+                        </div>
+                        <div class="text-xs text-gray-400">votes</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if match.winner == match.competitor2 %}
+                    <div class="mt-2 flex items-center justify-center gap-1">
+                        <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                        <span class="text-sm font-semibold text-yellow-400">WINNER</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Judge Submissions Progress -->
+    <div class="glass-effect rounded-2xl border border-gray-700 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-white">Judge Submissions</h3>
+            <span class="px-3 py-1 text-sm font-semibold {% if submitted_count == total_judges %}bg-green-500/20 text-green-400{% else %}bg-yellow-500/20 text-yellow-400{% endif %} rounded-full">
+                {{ submitted_count }} / {{ total_judges }} submitted
+            </span>
+        </div>
+        <div class="w-full bg-gray-700 rounded-full h-3">
+            <div class="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all" 
+                 style="width: {% widthratio submitted_count total_judges 100 %}%"></div>
+        </div>
+    </div>
+
+    <!-- Judge Scores Table -->
+    {% if judge_results %}
+    <div class="glass-effect rounded-2xl border border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-700 bg-gray-800/50">
+            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Judge Scores ({{ judge_results|length }})
+            </h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-800/50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Judge</th>
+                        <th class="px-6 py-3 text-center text-xs font-semibold text-blue-400 uppercase">{{ match.competitor1.profile.user.first_name }}</th>
+                        <th class="px-6 py-3 text-center text-xs font-semibold text-red-400 uppercase">{{ match.competitor2.profile.user.first_name }}</th>
+                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-400 uppercase">Winner Pick</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Submitted</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    {% for result in judge_results %}
+                    <tr class="hover:bg-gray-800/30">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center text-white text-sm font-bold">
+                                    {{ result.judge.profile.user.first_name|slice:":1" }}{{ result.judge.profile.user.last_name|slice:":1" }}
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-white">
+                                        {{ result.judge.profile.user.get_full_name|default:result.judge.profile.user.username }}
+                                    </p>
+                                    <p class="text-xs text-gray-500">{{ result.judge.certification_level|title }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="text-xl font-bold {% if result.competitor1_score > result.competitor2_score %}text-green-400{% else %}text-white{% endif %}">
+                                {{ result.competitor1_score }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="text-xl font-bold {% if result.competitor2_score > result.competitor1_score %}text-green-400{% else %}text-white{% endif %}">
+                                {{ result.competitor2_score }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            {% if result.winner == match.competitor1 %}
+                            <span class="px-3 py-1 text-xs font-semibold bg-blue-500/20 text-blue-400 rounded-full">
+                                {{ match.competitor1.profile.user.first_name }}
+                            </span>
+                            {% else %}
+                            <span class="px-3 py-1 text-xs font-semibold bg-red-500/20 text-red-400 rounded-full">
+                                {{ match.competitor2.profile.user.first_name }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-sm text-gray-400">{{ result.submitted_at|date:"M d, H:i" }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="border-t-2 border-gray-600 bg-gray-800/50">
+                    <tr>
+                        <td class="px-6 py-4 text-white font-semibold">Total Scores</td>
+                        <td class="px-6 py-4 text-center text-2xl font-bold {% if total_c1_score > total_c2_score %}text-green-400{% else %}text-white{% endif %}">
+                            {{ total_c1_score }}
+                        </td>
+                        <td class="px-6 py-4 text-center text-2xl font-bold {% if total_c2_score > total_c1_score %}text-green-400{% else %}text-white{% endif %}">
+                            {{ total_c2_score }}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="text-sm text-gray-400">{{ c1_votes }} vs {{ c2_votes }}</span>
+                        </td>
+                        <td class="px-6 py-4"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Detailed Scores (Promotion Matches) -->
+    {% if detailed_scores and match.is_promotion_match %}
+    <div class="glass-effect rounded-2xl border border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-700 bg-gray-800/50">
+            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                Average Score Breakdown (Promotion Match)
+            </h3>
+        </div>
+        <div class="p-6">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-700">
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-400">Category</th>
+                            <th class="px-4 py-3 text-center text-sm font-semibold text-blue-400">{{ detailed_scores.competitor1.name }}</th>
+                            <th class="px-4 py-3 text-center text-sm font-semibold text-red-400">{{ detailed_scores.competitor2.name }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        <tr class="hover:bg-gray-800/30">
+                            <td class="px-4 py-3 text-white">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-3 h-3 bg-red-500 rounded-full"></span>
+                                    Sparring
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-center text-lg font-bold {% if detailed_scores.competitor1.sparring > detailed_scores.competitor2.sparring %}text-green-400{% else %}text-white{% endif %}">
+                                {{ detailed_scores.competitor1.sparring }}
+                            </td>
+                            <td class="px-4 py-3 text-center text-lg font-bold {% if detailed_scores.competitor2.sparring > detailed_scores.competitor1.sparring %}text-green-400{% else %}text-white{% endif %}">
+                                {{ detailed_scores.competitor2.sparring }}
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-gray-800/30">
+                            <td class="px-4 py-3 text-white">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-3 h-3 bg-blue-500 rounded-full"></span>
+                                    Penan
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-center text-lg font-bold {% if detailed_scores.competitor1.penan > detailed_scores.competitor2.penan %}text-green-400{% else %}text-white{% endif %}">
+                                {{ detailed_scores.competitor1.penan }}
+                            </td>
+                            <td class="px-4 py-3 text-center text-lg font-bold {% if detailed_scores.competitor2.penan > detailed_scores.competitor1.penan %}text-green-400{% else %}text-white{% endif %}">
+                                {{ detailed_scores.competitor2.penan }}
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-gray-800/30">
+                            <td class="px-4 py-3 text-white">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                                    Judo
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-center text-lg font-bold {% if detailed_scores.competitor1.judo > detailed_scores.competitor2.judo %}text-green-400{% else %}text-white{% endif %}">
+                                {{ detailed_scores.competitor1.judo }}
+                            </td>
+                            <td class="px-4 py-3 text-center text-lg font-bold {% if detailed_scores.competitor2.judo > detailed_scores.competitor1.judo %}text-green-400{% else %}text-white{% endif %}">
+                                {{ detailed_scores.competitor2.judo }}
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-gray-800/30">
+                            <td class="px-4 py-3 text-white">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-3 h-3 bg-purple-500 rounded-full"></span>
+                                    Breaking
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-center text-lg font-bold {% if detailed_scores.competitor1.breaking > detailed_scores.competitor2.breaking %}text-green-400{% else %}text-white{% endif %}">
+                                {{ detailed_scores.competitor1.breaking }}
+                            </td>
+                            <td class="px-4 py-3 text-center text-lg font-bold {% if detailed_scores.competitor2.breaking > detailed_scores.competitor1.breaking %}text-green-400{% else %}text-white{% endif %}">
+                                {{ detailed_scores.competitor2.breaking }}
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot class="border-t-2 border-gray-600">
+                        <tr class="bg-gray-800/50">
+                            <td class="px-4 py-4 text-white font-semibold">Average Total</td>
+                            <td class="px-4 py-4 text-center text-2xl font-bold {% if detailed_scores.competitor1.total > detailed_scores.competitor2.total %}text-green-400{% else %}text-white{% endif %}">
+                                {{ detailed_scores.competitor1.total }}
+                            </td>
+                            <td class="px-4 py-4 text-center text-2xl font-bold {% if detailed_scores.competitor2.total > detailed_scores.competitor1.total %}text-green-400{% else %}text-white{% endif %}">
+                                {{ detailed_scores.competitor2.total }}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Judges Section -->
+    <div class="glass-effect rounded-2xl border border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-700 bg-gray-800/50">
+            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                Assigned Judges ({{ judge_assignments|length }})
+            </h3>
+        </div>
+        <div class="p-6">
+            {% if judge_assignments %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for assignment in judge_assignments %}
+                <div class="flex items-center gap-4 p-4 bg-gray-800/50 rounded-xl {% if assignment.judge.id in submitted_judge_ids %}border border-green-500/30{% endif %}">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center text-white font-bold relative">
+                        {{ assignment.judge.profile.user.first_name|slice:":1" }}{{ assignment.judge.profile.user.last_name|slice:":1" }}
+                        {% if assignment.judge.id in submitted_judge_ids %}
+                        <div class="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-white">
+                            {{ assignment.judge.profile.user.get_full_name|default:assignment.judge.profile.user.username }}
+                        </p>
+                        <p class="text-xs text-gray-400">{{ assignment.judge.certification_level|title }} Level</p>
+                        {% if assignment.judge.id in submitted_judge_ids %}
+                        <span class="text-xs text-green-400">Score submitted</span>
+                        {% else %}
+                        <span class="text-xs text-yellow-400">Pending submission</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-center text-gray-500 py-4">No judges assigned to this match.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Close Match Action (for admin) -->
+    {% if match.status != "completed" and judge_results %}
+    <div class="glass-effect rounded-2xl border border-green-500/30 bg-green-500/5 p-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-green-500/20 rounded-full">
+                    <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold text-green-400">Ready to Close Match</h4>
+                    <p class="text-sm text-gray-400">
+                        {{ submitted_count }} of {{ total_judges }} judges have submitted. 
+                        Current votes: {{ match.competitor1.profile.user.first_name }} ({{ c1_votes }}) vs {{ match.competitor2.profile.user.first_name }} ({{ c2_votes }})
+                    </p>
+                </div>
+            </div>
+            <form action="{% url 'admin_match_close' match.id %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" 
+                        class="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg hover:shadow-lg hover:shadow-green-500/50 transition-all"
+                        onclick="return confirm('Are you sure you want to close this match and declare the winner? This action cannot be undone.')">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Close Match & Declare Winner
+                </button>
+            </form>
+        </div>
+    </div>
+    {% elif match.status == "completed" %}
+    <!-- Match Already Completed -->
+    <div class="glass-effect rounded-2xl border border-green-500/30 bg-green-500/5 p-6">
+        <div class="flex items-center gap-4">
+            <div class="p-3 bg-green-500/20 rounded-full">
+                <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold text-green-400">Match Completed</h4>
+                <p class="text-sm text-gray-400">
+                    Winner: <strong class="text-green-400">{{ match.winner.profile.user.get_full_name|default:match.winner.profile.user.username }}</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+    {% elif not judge_results %}
+    <!-- No Submissions Yet -->
+    <div class="glass-effect rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-6">
+        <div class="flex items-center gap-4">
+            <div class="p-3 bg-yellow-500/20 rounded-full">
+                <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold text-yellow-400">Awaiting Judge Scores</h4>
+                <p class="text-sm text-gray-400">No judges have submitted their scores yet. The match can be closed once at least one judge has submitted.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Match Notes -->
+    {% if match.notes %}
+    <div class="glass-effect rounded-2xl border border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-700 bg-gray-800/50">
+            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+                Match Notes
+            </h3>
+        </div>
+        <div class="p-6">
+            <p class="text-gray-300">{{ match.notes }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

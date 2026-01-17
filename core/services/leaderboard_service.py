@@ -3,7 +3,7 @@ Leaderboard and Points Service
 Handles all leaderboard ranking and point calculation logic.
 """
 from datetime import datetime
-from django.db.models import Sum
+from django.db.models import Sum, Case, When, IntegerField
 from core.models import (
     TraineePoints,
     Leaderboard,
@@ -38,8 +38,19 @@ class LeaderboardService:
         if month is None:
             month = datetime.now().month
         
-        # Get all trainees sorted by points
-        trainees_points = TraineePoints.objects.all().order_by('-total_points')
+        # Get all trainees sorted by belt rank first, then points
+        # master_degree is highest, white is lowest
+        trainees_points = TraineePoints.objects.all().annotate(
+            belt_order=Case(
+                When(trainee__belt_rank='master_degree', then=4),
+                When(trainee__belt_rank='black', then=3),
+                When(trainee__belt_rank='brown', then=2),
+                When(trainee__belt_rank='green', then=1),
+                When(trainee__belt_rank='white', then=0),
+                default=0,
+                output_field=IntegerField(),
+            )
+        ).order_by('-belt_order', '-total_points')
         
         for rank, tp in enumerate(trainees_points, 1):
             try:
@@ -200,3 +211,25 @@ class PointsService:
             return min(100, progress)
         except TraineePoints.DoesNotExist:
             return 0
+
+    @staticmethod
+    def sync_points_with_belt(trainee, force=False):
+        """
+        Ensure trainee points match the minimum threshold for their current belt rank.
+        Used when admin manually changes the belt rank.
+        If force is True, points will be reset to the threshold even if currently higher.
+        """
+        try:
+            threshold = BeltRankThreshold.objects.get(belt_rank=trainee.belt_rank)
+            points_record, _ = TraineePoints.objects.get_or_create(trainee=trainee)
+
+            # Update points if forced or if they are currently lower than the threshold
+            if force or points_record.total_points < threshold.points_required:
+                points_record.total_points = threshold.points_required
+                points_record.save()
+
+                # Update leaderboards
+                LeaderboardService.update_all_leaderboards()
+        except BeltRankThreshold.DoesNotExist:
+            pass
+

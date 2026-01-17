@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}Close Match - BlackCobra Karate Club{% endblock %}
+
+{% block page_title %}Close Match & Declare Winner{% endblock %}
+
+{% block content %}
+<style>
+    .confirm-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .competitor-section {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        color: white;
+    }
+    
+    .competitor-card {
+        text-align: center;
+        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 0.75rem;
+        min-width: 180px;
+    }
+    
+    .competitor-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        margin: 0 auto 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .vs-badge {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .votes-section {
+        padding: 1.5rem 2rem;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .vote-bar {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .vote-progress {
+        flex: 1;
+        height: 24px;
+        background: #e2e8f0;
+        border-radius: 9999px;
+        overflow: hidden;
+        display: flex;
+    }
+    
+    .vote-c1 {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        transition: width 0.5s ease;
+    }
+    
+    .vote-c2 {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        transition: width 0.5s ease;
+    }
+    
+    .submissions-table {
+        width: 100%;
+    }
+    
+    .submissions-table th {
+        background: #f1f5f9;
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+    
+    .submissions-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        padding: 1.5rem 2rem;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .btn-cancel {
+        flex: 1;
+        padding: 0.75rem 1.5rem;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+        text-decoration: none;
+    }
+    
+    .btn-cancel:hover {
+        background: #e2e8f0;
+    }
+    
+    .btn-confirm {
+        flex: 2;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-confirm:hover {
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        transform: translateY(-1px);
+    }
+    
+    .warning-box {
+        padding: 1rem 1.5rem;
+        background: #fffbeb;
+        border: 1px solid #fcd34d;
+        border-radius: 0.5rem;
+        margin: 1.5rem 2rem;
+    }
+</style>
+
+<div class="max-w-3xl mx-auto">
+    <div class="confirm-card">
+        <!-- Competitor Section -->
+        <div class="competitor-section">
+            <!-- Competitor 1 -->
+            <div class="competitor-card">
+                <div class="competitor-avatar bg-gradient-to-br from-red-400 to-red-600">
+                    {% if match.competitor1.profile.profile_image %}
+                        <img src="{{ match.competitor1.profile.profile_image.url }}" alt="" class="w-full h-full object-cover rounded-full">
+                    {% else %}
+                        {{ match.competitor1.profile.user.first_name|slice:":1"|upper }}{{ match.competitor1.profile.user.last_name|slice:":1"|upper }}
+                    {% endif %}
+                </div>
+                <h3 class="text-lg font-bold">{{ match.competitor1.profile.user.get_full_name|default:match.competitor1.profile.user.username }}</h3>
+            </div>
+            
+            <span class="vs-badge">VS</span>
+            
+            <!-- Competitor 2 -->
+            <div class="competitor-card">
+                <div class="competitor-avatar bg-gradient-to-br from-blue-400 to-blue-600">
+                    {% if match.competitor2.profile.profile_image %}
+                        <img src="{{ match.competitor2.profile.profile_image.url }}" alt="" class="w-full h-full object-cover rounded-full">
+                    {% else %}
+                        {{ match.competitor2.profile.user.first_name|slice:":1"|upper }}{{ match.competitor2.profile.user.last_name|slice:":1"|upper }}
+                    {% endif %}
+                </div>
+                <h3 class="text-lg font-bold">{{ match.competitor2.profile.user.get_full_name|default:match.competitor2.profile.user.username }}</h3>
+            </div>
+        </div>
+        
+        <!-- Vote Summary -->
+        <div class="votes-section">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Judge Votes Summary</h3>
+            
+            {% with c1_votes=0 c2_votes=0 total_c1=0 total_c2=0 %}
+            {% for result in results %}
+                {% if result.winner == match.competitor1 %}
+                    {% with c1_votes=c1_votes|add:1 %}{% endwith %}
+                {% else %}
+                    {% with c2_votes=c2_votes|add:1 %}{% endwith %}
+                {% endif %}
+            {% endfor %}
+            {% endwith %}
+            
+            <div class="vote-bar">
+                <span class="text-sm font-semibold text-red-600 min-w-[100px]">
+                    {{ match.competitor1.profile.user.first_name }}
+                </span>
+                <div class="vote-progress">
+                    <div class="vote-c1" id="c1-bar"></div>
+                    <div class="vote-c2" id="c2-bar"></div>
+                </div>
+                <span class="text-sm font-semibold text-blue-600 min-w-[100px] text-right">
+                    {{ match.competitor2.profile.user.first_name }}
+                </span>
+            </div>
+            <p class="text-sm text-gray-600 mt-2 text-center" id="vote-summary">Loading vote count...</p>
+        </div>
+        
+        <!-- Judge Submissions Table -->
+        <div class="p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Judge Submissions ({{ results.count }})</h3>
+            
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="submissions-table">
+                    <thead>
+                        <tr>
+                            <th>Judge</th>
+                            <th>{{ match.competitor1.profile.user.first_name }} Score</th>
+                            <th>{{ match.competitor2.profile.user.first_name }} Score</th>
+                            <th>Winner Pick</th>
+                            <th>Submitted</th>
+                        </tr>
+                    </thead>
+                    <tbody id="submissions-body">
+                        {% for result in results %}
+                        <tr class="hover:bg-gray-50" data-winner="{{ result.winner.id }}" data-c1="{{ match.competitor1.id }}" data-c1-score="{{ result.competitor1_score }}" data-c2-score="{{ result.competitor2_score }}">
+                            <td class="font-medium text-gray-900">
+                                {{ result.judge.profile.user.get_full_name|default:result.judge.profile.user.username }}
+                            </td>
+                            <td>
+                                <span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+                                    {{ result.competitor1_score }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
+                                    {{ result.competitor2_score }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if result.winner == match.competitor1 %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                    {{ result.winner.profile.user.first_name }}
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                    {{ result.winner.profile.user.first_name }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-sm text-gray-500">
+                                {{ result.submitted_at|date:"M d, H:i" }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-8 text-gray-500">No submissions yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Warning Box -->
+        <div class="warning-box">
+            <div class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                <div>
+                    <h4 class="font-semibold text-amber-800">This action is final</h4>
+                    <p class="text-sm text-amber-700 mt-1">
+                        Once you close this match, the winner will be officially declared based on judge votes, 
+                        points will be awarded, and no more judge submissions will be accepted.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <form method="post" class="action-buttons">
+            {% csrf_token %}
+            <a href="{% url 'admin_match_detail' match.id %}" class="btn-cancel">
+                Cancel
+            </a>
+            <button type="submit" class="btn-confirm">
+                <svg class="w-5 h-5 inline-block mr-2 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Close Match & Declare Winner
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rows = document.querySelectorAll('#submissions-body tr[data-winner]');
+    let c1Votes = 0;
+    let c2Votes = 0;
+    let totalC1Score = 0;
+    let totalC2Score = 0;
+    
+    rows.forEach(row => {
+        const winner = row.dataset.winner;
+        const c1 = row.dataset.c1;
+        const c1Score = parseInt(row.dataset.c1Score) || 0;
+        const c2Score = parseInt(row.dataset.c2Score) || 0;
+        
+        totalC1Score += c1Score;
+        totalC2Score += c2Score;
+        
+        if (winner === c1) {
+            c1Votes++;
+        } else {
+            c2Votes++;
+        }
+    });
+    
+    const total = c1Votes + c2Votes;
+    const c1Pct = total > 0 ? (c1Votes / total * 100) : 50;
+    const c2Pct = total > 0 ? (c2Votes / total * 100) : 50;
+    
+    document.getElementById('c1-bar').style.width = c1Pct + '%';
+    document.getElementById('c2-bar').style.width = c2Pct + '%';
+    document.getElementById('vote-summary').textContent = 
+        `Votes: ${c1Votes} - ${c2Votes} | Total Score: ${totalC1Score} - ${totalC2Score}`;
+});
+</script>
+{% endblock %}

@@ -1,0 +1,243 @@
+<!-- Match Monitor Partial Template -->
+<div class="glass-effect rounded-2xl border border-gray-700 overflow-hidden">
+    {% if matches %}
+    <!-- Desktop Table View -->
+    <div class="hidden lg:block overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-800/50 border-b border-gray-700">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Event</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Match</th>
+                    <th class="px-6 py-4 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Type</th>
+                    <th class="px-6 py-4 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Score</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Winner</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Judges</th>
+                    <th class="px-6 py-4 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-4 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-700">
+                {% for match in matches %}
+                <tr class="hover:bg-gray-800/30 transition-colors">
+                    <!-- Event -->
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-white">{{ match.event.name }}</div>
+                        <div class="text-xs text-gray-400">{{ match.scheduled_time|date:"M d, Y H:i" }}</div>
+                    </td>
+                    
+                    <!-- Match Pairing -->
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                            <div class="text-sm">
+                                <span class="font-medium {% if match.winner == match.competitor1 %}text-green-400{% else %}text-white{% endif %}">
+                                    {{ match.competitor1.profile.user.get_full_name|default:match.competitor1.profile.user.username }}
+                                </span>
+                                <span class="text-xs text-gray-500">({{ match.competitor1.belt_rank|title }})</span>
+                            </div>
+                            <span class="text-gray-500 font-bold">vs</span>
+                            <div class="text-sm">
+                                <span class="font-medium {% if match.winner == match.competitor2 %}text-green-400{% else %}text-white{% endif %}">
+                                    {{ match.competitor2.profile.user.get_full_name|default:match.competitor2.profile.user.username }}
+                                </span>
+                                <span class="text-xs text-gray-500">({{ match.competitor2.belt_rank|title }})</span>
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <!-- Match Type -->
+                    <td class="px-6 py-4 text-center">
+                        <div class="flex flex-col items-center gap-1">
+                            {% if match.match_type == "sparring" %}
+                            <span class="px-2 py-1 text-xs font-semibold bg-red-500/20 text-red-400 rounded-full">Sparring</span>
+                            {% elif match.match_type == "penan" %}
+                            <span class="px-2 py-1 text-xs font-semibold bg-blue-500/20 text-blue-400 rounded-full">Penan</span>
+                            {% elif match.match_type == "judo" %}
+                            <span class="px-2 py-1 text-xs font-semibold bg-green-500/20 text-green-400 rounded-full">Judo</span>
+                            {% elif match.match_type == "breaking" %}
+                            <span class="px-2 py-1 text-xs font-semibold bg-purple-500/20 text-purple-400 rounded-full">Breaking</span>
+                            {% endif %}
+                            {% if match.is_promotion_match %}
+                            <span class="px-2 py-1 text-xs font-semibold bg-orange-500/20 text-orange-400 rounded-full">Promotion</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    
+                    <!-- Score -->
+                    <td class="px-6 py-4 text-center">
+                        {% if match.status == "completed" %}
+                        <div class="flex items-center justify-center gap-2">
+                            <span class="text-lg font-bold {% if match.winner == match.competitor1 %}text-green-400{% else %}text-white{% endif %}">
+                                {% if match.result %}{{ match.result.competitor1_score }}{% else %}-{% endif %}
+                            </span>
+                            <span class="text-gray-500">:</span>
+                            <span class="text-lg font-bold {% if match.winner == match.competitor2 %}text-green-400{% else %}text-white{% endif %}">
+                                {% if match.result %}{{ match.result.competitor2_score }}{% else %}-{% endif %}
+                            </span>
+                        </div>
+                        {% else %}
+                        <span class="text-gray-500">-</span>
+                        {% endif %}
+                    </td>
+                    
+                    <!-- Winner -->
+                    <td class="px-6 py-4">
+                        {% if match.winner %}
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            <span class="text-sm font-medium text-green-400">
+                                {{ match.winner.profile.user.get_full_name|default:match.winner.profile.user.username }}
+                            </span>
+                        </div>
+                        {% else %}
+                        <span class="text-gray-500 text-sm">Pending</span>
+                        {% endif %}
+                    </td>
+                    
+                    <!-- Judges -->
+                    <td class="px-6 py-4">
+                        <div class="flex flex-wrap gap-1">
+                            {% for assignment in match.judge_assignments.all|slice:":3" %}
+                            <span class="px-2 py-0.5 text-xs bg-gray-700 text-gray-300 rounded">
+                                {{ assignment.judge.profile.user.first_name|slice:":1" }}{{ assignment.judge.profile.user.last_name|slice:":1" }}
+                            </span>
+                            {% endfor %}
+                            {% if match.judge_assignments.count > 3 %}
+                            <span class="px-2 py-0.5 text-xs bg-gray-600 text-gray-400 rounded">
+                                +{{ match.judge_assignments.count|add:"-3" }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    
+                    <!-- Status -->
+                    <td class="px-6 py-4 text-center">
+                        {% if match.status == "scheduled" %}
+                        <span class="px-3 py-1 text-xs font-semibold bg-yellow-500/20 text-yellow-400 rounded-full">Scheduled</span>
+                        {% elif match.status == "ongoing" %}
+                        <span class="px-3 py-1 text-xs font-semibold bg-purple-500/20 text-purple-400 rounded-full animate-pulse">Ongoing</span>
+                        {% elif match.status == "completed" %}
+                        <span class="px-3 py-1 text-xs font-semibold bg-green-500/20 text-green-400 rounded-full">Completed</span>
+                        {% elif match.status == "cancelled" %}
+                        <span class="px-3 py-1 text-xs font-semibold bg-red-500/20 text-red-400 rounded-full">Cancelled</span>
+                        {% endif %}
+                    </td>
+                    
+                    <!-- Actions -->
+                    <td class="px-6 py-4 text-center">
+                        <a href="{% url 'admin_match_detail' match.id %}" 
+                           class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium text-blue-400 bg-blue-500/10 rounded-lg hover:bg-blue-500/20 transition-colors">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            View
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Mobile Card View -->
+    <div class="lg:hidden divide-y divide-gray-700">
+        {% for match in matches %}
+        <div class="p-4 hover:bg-gray-800/30 transition-colors">
+            <!-- Event & Date -->
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <span class="text-sm font-medium text-white">{{ match.event.name }}</span>
+                    <div class="text-xs text-gray-400">{{ match.scheduled_time|date:"M d, Y H:i" }}</div>
+                </div>
+                {% if match.status == "scheduled" %}
+                <span class="px-2 py-1 text-xs font-semibold bg-yellow-500/20 text-yellow-400 rounded-full">Scheduled</span>
+                {% elif match.status == "ongoing" %}
+                <span class="px-2 py-1 text-xs font-semibold bg-purple-500/20 text-purple-400 rounded-full animate-pulse">Ongoing</span>
+                {% elif match.status == "completed" %}
+                <span class="px-2 py-1 text-xs font-semibold bg-green-500/20 text-green-400 rounded-full">Completed</span>
+                {% elif match.status == "cancelled" %}
+                <span class="px-2 py-1 text-xs font-semibold bg-red-500/20 text-red-400 rounded-full">Cancelled</span>
+                {% endif %}
+            </div>
+            
+            <!-- Match Pairing with Scores -->
+            <div class="bg-gray-800/50 rounded-lg p-3 mb-3">
+                <div class="flex items-center justify-between">
+                    <div class="text-center flex-1">
+                        <div class="text-sm font-medium {% if match.winner == match.competitor1 %}text-green-400{% else %}text-white{% endif %}">
+                            {{ match.competitor1.profile.user.first_name }} {{ match.competitor1.profile.user.last_name|slice:":1" }}.
+                        </div>
+                        <div class="text-xs text-gray-500">{{ match.competitor1.belt_rank|title }}</div>
+                        {% if match.status == "completed" and match.result %}
+                        <div class="text-xl font-bold mt-1 {% if match.winner == match.competitor1 %}text-green-400{% else %}text-white{% endif %}">
+                            {{ match.result.competitor1_score }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="px-4">
+                        <span class="text-gray-500 font-bold text-lg">VS</span>
+                    </div>
+                    <div class="text-center flex-1">
+                        <div class="text-sm font-medium {% if match.winner == match.competitor2 %}text-green-400{% else %}text-white{% endif %}">
+                            {{ match.competitor2.profile.user.first_name }} {{ match.competitor2.profile.user.last_name|slice:":1" }}.
+                        </div>
+                        <div class="text-xs text-gray-500">{{ match.competitor2.belt_rank|title }}</div>
+                        {% if match.status == "completed" and match.result %}
+                        <div class="text-xl font-bold mt-1 {% if match.winner == match.competitor2 %}text-green-400{% else %}text-white{% endif %}">
+                            {{ match.result.competitor2_score }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Match Type & Winner -->
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    {% if match.match_type == "sparring" %}
+                    <span class="px-2 py-1 text-xs font-semibold bg-red-500/20 text-red-400 rounded-full">Sparring</span>
+                    {% elif match.match_type == "penan" %}
+                    <span class="px-2 py-1 text-xs font-semibold bg-blue-500/20 text-blue-400 rounded-full">Penan</span>
+                    {% elif match.match_type == "judo" %}
+                    <span class="px-2 py-1 text-xs font-semibold bg-green-500/20 text-green-400 rounded-full">Judo</span>
+                    {% elif match.match_type == "breaking" %}
+                    <span class="px-2 py-1 text-xs font-semibold bg-purple-500/20 text-purple-400 rounded-full">Breaking</span>
+                    {% endif %}
+                    {% if match.is_promotion_match %}
+                    <span class="px-2 py-1 text-xs font-semibold bg-orange-500/20 text-orange-400 rounded-full">Promotion</span>
+                    {% endif %}
+                </div>
+                {% if match.winner %}
+                <div class="flex items-center gap-1">
+                    <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    <span class="text-xs text-green-400">{{ match.winner.profile.user.first_name }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- View Details -->
+            <a href="{% url 'admin_match_detail' match.id %}" 
+               class="block w-full text-center px-4 py-2 text-sm font-medium text-blue-400 bg-blue-500/10 rounded-lg hover:bg-blue-500/20 transition-colors">
+                View Details
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="p-12 text-center">
+        <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+        </svg>
+        <h3 class="text-lg font-medium text-gray-300 mb-2">No matches found</h3>
+        <p class="text-gray-500 mb-4">Try adjusting your filters or create new matches.</p>
+        <a href="{% url 'admin_matchmaking' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white btn-primary rounded-lg">
+            Go to Matchmaking
+        </a>
+    </div>
+    {% endif %}
+</div>

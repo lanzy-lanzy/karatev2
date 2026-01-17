@@ -399,7 +399,7 @@ def trainee_add(request):
         )
 
         # Create trainee
-        Trainee.objects.create(
+        trainee = Trainee.objects.create(
             profile=profile,
             belt_rank=belt_rank,
             weight=weight,
@@ -407,6 +407,11 @@ def trainee_add(request):
             emergency_phone=emergency_phone,
             status=status,
         )
+
+        # Sync points with belt rank (set to default points for the rank)
+        from core.services.leaderboard_service import PointsService
+
+        PointsService.sync_points_with_belt(trainee, force=True)
 
         messages.success(
             request, f"Trainee {first_name} {last_name} has been added successfully."
@@ -544,6 +549,9 @@ def trainee_edit(request, trainee_id):
         profile.date_of_birth = date_of_birth
         profile.save()
 
+        # Check if belt rank changed
+        rank_changed = trainee.belt_rank != belt_rank
+
         # Update trainee
         trainee.belt_rank = belt_rank
         trainee.weight = weight
@@ -551,6 +559,12 @@ def trainee_edit(request, trainee_id):
         trainee.emergency_contact = emergency_contact
         trainee.emergency_phone = emergency_phone
         trainee.save()
+
+        # Sync points with new belt rank
+        from core.services.leaderboard_service import PointsService
+
+        # If rank changed, force points to default threshold
+        PointsService.sync_points_with_belt(trainee, force=rank_changed)
 
         messages.success(
             request, f"Trainee {first_name} {last_name} has been updated successfully."
@@ -3124,6 +3138,11 @@ def belt_rank_promote(request, trainee_id):
         trainee.belt_rank = new_belt_rank
         trainee.save()
 
+        # Sync points with new belt rank (force to default points for the new rank)
+        from core.services.leaderboard_service import PointsService
+
+        PointsService.sync_points_with_belt(trainee, force=True)
+
         # Create progress record
         BeltRankProgress.objects.create(
             trainee=trainee,
@@ -4239,3 +4258,278 @@ def export_events_excel(
         include_statistics,
         request,
     )
+
+
+@admin_required
+def match_monitor(request):
+    """
+    Match monitoring dashboard view - comprehensive match management and monitoring.
+    Shows all matches with results, judges, and winner information.
+    """
+    from core.models import Match, MatchResult, MatchJudge, Event, Judge
+    from django.db.models import Count, Prefetch
+
+    # Get all matches with related data
+    matches = Match.objects.filter(archived=False).select_related(
+        "event",
+        "competitor1__profile__user",
+        "competitor2__profile__user",
+        "winner__profile__user",
+    ).prefetch_related(
+        "judge_assignments__judge__profile__user",
+        Prefetch(
+            "results",
+            queryset=MatchResult.objects.select_related(
+                "judge__profile__user", "winner__profile__user"
+            ),
+        ),
+    ).order_by("-scheduled_time")
+
+    # Apply filters
+    event_filter = request.GET.get("event_filter", "").strip()
+    if event_filter:
+        matches = matches.filter(event_id=event_filter)
+
+    match_type_filter = request.GET.get("match_type_filter", "").strip()
+    if match_type_filter:
+        matches = matches.filter(match_type=match_type_filter)
+
+    status_filter = request.GET.get("status_filter", "").strip()
+    if status_filter:
+        matches = matches.filter(status=status_filter)
+
+    search = request.GET.get("search", "").strip()
+    if search:
+        matches = matches.filter(
+            Q(competitor1__profile__user__first_name__icontains=search)
+            | Q(competitor1__profile__user__last_name__icontains=search)
+            | Q(competitor2__profile__user__first_name__icontains=search)
+            | Q(competitor2__profile__user__last_name__icontains=search)
+            | Q(event__name__icontains=search)
+        )
+
+    # Calculate statistics
+    total_matches = matches.count()
+    completed_matches = matches.filter(status="completed").count()
+    pending_matches = matches.filter(status="scheduled").count()
+    ongoing_matches = matches.filter(status="ongoing").count()
+
+    # Match type breakdown
+    sparring_count = matches.filter(match_type="sparring").count()
+    penan_count = matches.filter(match_type="penan").count()
+    judo_count = matches.filter(match_type="judo").count()
+    breaking_count = matches.filter(match_type="breaking").count()
+    promotion_count = matches.filter(is_promotion_match=True).count()
+
+    # Get all events for filter dropdown
+    all_events = Event.objects.filter(archived=False).order_by("-event_date")
+
+    context = {
+        "matches": matches,
+        "all_events": all_events,
+        "match_types": Match.MATCH_TYPE_CHOICES,
+        "total_matches": total_matches,
+        "completed_matches": completed_matches,
+        "pending_matches": pending_matches,
+        "ongoing_matches": ongoing_matches,
+        "sparring_count": sparring_count,
+        "penan_count": penan_count,
+        "judo_count": judo_count,
+        "breaking_count": breaking_count,
+        "promotion_count": promotion_count,
+        "event_filter": event_filter,
+        "match_type_filter": match_type_filter,
+        "status_filter": status_filter,
+        "search": search,
+    }
+
+    if request.headers.get("HX-Request"):
+        return render(request, "admin/matchmaking/monitor_partial.html", context)
+
+    return render(request, "admin/matchmaking/monitor.html", context)
+
+
+@admin_required
+def match_detail(request, match_id):
+    """
+    Match detail view - shows full scoring breakdown and judge results.
+    """
+    from core.models import Match, MatchResult, MatchJudge
+    from django.db.models import Prefetch
+
+    match = get_object_or_404(
+        Match.objects.select_related(
+            "event",
+            "competitor1__profile__user",
+            "competitor2__profile__user",
+            "winner__profile__user",
+        ).prefetch_related(
+            "judge_assignments__judge__profile__user",
+            Prefetch(
+                "results",
+                queryset=MatchResult.objects.select_related(
+                    "judge__profile__user", "winner__profile__user"
+                ),
+            ),
+        ),
+        id=match_id,
+    )
+
+    # Get all judge submissions for this match
+    judge_results = match.results.all()
+    
+    # Calculate vote counts
+    c1_votes = sum(1 for r in judge_results if r.winner == match.competitor1)
+    c2_votes = sum(1 for r in judge_results if r.winner == match.competitor2)
+    total_c1_score = sum(r.competitor1_score for r in judge_results)
+    total_c2_score = sum(r.competitor2_score for r in judge_results)
+
+    # Get assigned judges
+    judge_assignments = match.judge_assignments.select_related(
+        "judge__profile__user"
+    ).all()
+    
+    # Check which judges have submitted
+    submitted_judge_ids = [r.judge_id for r in judge_results]
+    
+    # Calculate detailed scores for promotion matches (average across all judges)
+    detailed_scores = None
+    if judge_results.exists() and match.is_promotion_match:
+        count = judge_results.count()
+        detailed_scores = {
+            "competitor1": {
+                "name": match.competitor1.profile.user.get_full_name()
+                or match.competitor1.profile.user.username,
+                "sparring": sum(r.c1_sparring_score for r in judge_results) // count if count else 0,
+                "penan": sum(r.c1_penan_score for r in judge_results) // count if count else 0,
+                "judo": sum(r.c1_judo_score for r in judge_results) // count if count else 0,
+                "breaking": sum(r.c1_breaking_score for r in judge_results) // count if count else 0,
+                "total": total_c1_score // count if count else 0,
+            },
+            "competitor2": {
+                "name": match.competitor2.profile.user.get_full_name()
+                or match.competitor2.profile.user.username,
+                "sparring": sum(r.c2_sparring_score for r in judge_results) // count if count else 0,
+                "penan": sum(r.c2_penan_score for r in judge_results) // count if count else 0,
+                "judo": sum(r.c2_judo_score for r in judge_results) // count if count else 0,
+                "breaking": sum(r.c2_breaking_score for r in judge_results) // count if count else 0,
+                "total": total_c2_score // count if count else 0,
+            },
+        }
+
+    context = {
+        "match": match,
+        "judge_results": judge_results,
+        "judge_assignments": judge_assignments,
+        "detailed_scores": detailed_scores,
+        "c1_votes": c1_votes,
+        "c2_votes": c2_votes,
+        "total_c1_score": total_c1_score,
+        "total_c2_score": total_c2_score,
+        "submitted_judge_ids": submitted_judge_ids,
+        "total_judges": judge_assignments.count(),
+        "submitted_count": len(submitted_judge_ids),
+    }
+
+    return render(request, "admin/matchmaking/detail.html", context)
+
+
+@admin_required
+def match_close(request, match_id):
+    """
+    Close a match and declare the winner based on judge scores.
+    Winner is determined by majority vote from judges' submitted scores.
+    """
+    from core.models import Match, MatchResult, TraineePoints, Leaderboard
+
+    match = get_object_or_404(Match, id=match_id)
+
+    # Check if match is already completed
+    if match.status == "completed":
+        messages.warning(request, "This match is already completed.")
+        return redirect("admin_match_detail", match_id=match_id)
+
+    # Get all judge submissions for this match
+    results = MatchResult.objects.filter(match=match).select_related(
+        "judge__profile__user", "winner__profile__user"
+    )
+
+    if not results.exists():
+        messages.error(request, "No judge scores have been submitted yet.")
+        return redirect("admin_match_detail", match_id=match_id)
+
+    if request.method == "POST":
+        # Tally votes for each competitor
+        c1_votes = 0
+        c2_votes = 0
+        total_c1_score = 0
+        total_c2_score = 0
+
+        for result in results:
+            total_c1_score += result.competitor1_score
+            total_c2_score += result.competitor2_score
+            if result.winner == match.competitor1:
+                c1_votes += 1
+            else:
+                c2_votes += 1
+
+        # Determine winner by majority vote
+        if c1_votes > c2_votes:
+            winner = match.competitor1
+        elif c2_votes > c1_votes:
+            winner = match.competitor2
+        else:
+            # Tie in votes - use total score
+            if total_c1_score > total_c2_score:
+                winner = match.competitor1
+            else:
+                winner = match.competitor2
+
+        # Update match with winner and mark as completed
+        match.winner = winner
+        match.status = "completed"
+        match.save()
+
+        # Award points to trainees
+        try:
+            winner_points, _ = TraineePoints.objects.get_or_create(trainee=winner)
+            loser = (
+                match.competitor1 if match.competitor2 == winner else match.competitor2
+            )
+            loser_points, _ = TraineePoints.objects.get_or_create(trainee=loser)
+
+            winner_points.add_win()
+            loser_points.add_loss()
+
+            # Update leaderboards
+            _update_leaderboards_after_match()
+        except Exception as e:
+            print(f"Error awarding points: {e}")
+
+        winner_name = (
+            winner.profile.user.get_full_name() or winner.profile.user.username
+        )
+        messages.success(
+            request,
+            f"Match closed! Winner: {winner_name} (Votes: {c1_votes} vs {c2_votes})",
+        )
+
+        if request.headers.get("HX-Request"):
+            response = HttpResponse()
+            response["HX-Redirect"] = f"/admin/matchmaking/{match_id}/detail/"
+            return response
+
+        return redirect("admin_match_detail", match_id=match_id)
+
+    # GET request - show confirmation page
+    context = {
+        "match": match,
+        "results": results,
+    }
+    return render(request, "admin/matchmaking/close_confirm.html", context)
+
+
+def _update_leaderboards_after_match():
+    """Update leaderboard rankings after a match is completed."""
+    from core.services.leaderboard_service import LeaderboardService
+    LeaderboardService.update_all_leaderboards()

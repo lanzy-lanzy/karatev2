@@ -32,23 +32,25 @@ def dashboard_view(request):
         scheduled_time__gte=timezone.now()
     ).distinct().count()
     
-    # Get recent judging history (completed matches)
+    # Get recent judging history - only show matches where THIS judge has submitted
+    # AND match is completed (closed by admin)
     recent_judged_matches = Match.objects.filter(
         judge_assignments__judge=judge,
-        status='completed'
+        status='completed',
+        results__judge=judge
     ).select_related(
         'event', 'competitor1__profile__user', 'competitor2__profile__user', 'winner__profile__user'
-    ).order_by('-scheduled_time')[:5]
+    ).order_by('-scheduled_time').distinct()[:5]
     
-    # Get count of matches pending result entry
+    # Get count of matches pending result entry for THIS judge
     pending_results_count = Match.objects.filter(
         judge_assignments__judge=judge,
-        status='completed'
+        status__in=['scheduled', 'ongoing']
     ).exclude(
-        result__isnull=False
-    ).count()
+        results__judge=judge  # Exclude matches where this judge has already submitted
+    ).distinct().count()
     
-    # Get total matches judged
+    # Get total matches judged by this judge
     total_matches_judged = MatchResult.objects.filter(judge=judge).count()
     
     context = {
@@ -137,17 +139,17 @@ def results_view(request):
     """
     judge = get_object_or_404(Judge, profile__user=request.user)
     
-    # Get matches pending result entry (scheduled, completed, or ongoing but no result yet)
+    # Get matches pending result entry for THIS judge (assigned but not submitted by this judge)
     pending_results = Match.objects.filter(
         judge_assignments__judge=judge,
-        status__in=['scheduled', 'completed', 'ongoing']
+        status__in=['scheduled', 'ongoing']
     ).exclude(
-        result__isnull=False
+        results__judge=judge  # Exclude matches where THIS judge has already submitted
     ).select_related(
         'event', 'competitor1__profile__user', 'competitor2__profile__user'
     ).order_by('-scheduled_time')
     
-    # Get matches with results already submitted
+    # Get results submitted by THIS judge only
     submitted_results = MatchResult.objects.filter(
         judge=judge
     ).select_related(
@@ -168,6 +170,7 @@ def results_view(request):
 def result_entry(request, match_id):
     """
     Handle result entry for a match.
+    Each judge can submit their own score independently.
     Requirements: 14.2, 14.3, 14.4
     """
     judge = get_object_or_404(Judge, profile__user=request.user)
@@ -178,10 +181,15 @@ def result_entry(request, match_id):
         messages.error(request, 'You are not assigned to this match.')
         return redirect('judge_results')
     
-    # Check if result already exists (immutability check)
-    existing_result = MatchResult.objects.filter(match=match).first()
+    # Check if match is already completed (closed by admin)
+    if match.status == 'completed':
+        messages.error(request, 'This match has been completed. No more scores can be submitted.')
+        return redirect('judge_results')
+    
+    # Check if THIS judge has already submitted a result
+    existing_result = MatchResult.objects.filter(match=match, judge=judge).first()
     if existing_result and existing_result.is_locked:
-        messages.error(request, 'Results have already been submitted and locked for this match.')
+        messages.error(request, 'You have already submitted your score for this match.')
         return redirect('judge_results')
     
     if request.method == 'POST':

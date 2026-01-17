@@ -200,6 +200,21 @@ urlpatterns = [
         admin_views.auto_matchmaking_confirm,
         name="admin_auto_matchmaking_confirm",
     ),
+    path(
+        "admin/matchmaking/monitor/",
+        admin_views.match_monitor,
+        name="admin_match_monitor",
+    ),
+    path(
+        "admin/matchmaking/<int:match_id>/detail/",
+        admin_views.match_detail,
+        name="admin_match_detail",
+    ),
+    path(
+        "admin/matchmaking/<int:match_id>/close/",
+        admin_views.match_close,
+        name="admin_match_close",
+    ),
     # Payment Management URLs (Requirements: 6.1-6.5)
     path("admin/payments/", admin_views.payment_list, name="admin_payments"),
     path(

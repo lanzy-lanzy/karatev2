@@ -49,6 +49,21 @@ class Trainee(models.Model):
         ("master_degree", "Master Degree"),
     ]
 
+    # Belt rank order for sorting (higher number = higher rank)
+    # master_degree is the highest rank
+    BELT_ORDER = {
+        "white": 0,
+        "green": 1,
+        "brown": 2,
+        "black": 3,
+        "master_degree": 4,
+    }
+
+    @classmethod
+    def get_belt_order(cls, belt_rank):
+        """Return the numeric order for a belt rank (higher = better)."""
+        return cls.BELT_ORDER.get(belt_rank, 0)
+
     STATUS_CHOICES = [
         ("active", "Active"),
         ("inactive", "Inactive"),
@@ -485,10 +500,13 @@ class MatchJudge(models.Model):
 class MatchResult(models.Model):
     """
     MatchResult model for recording match outcomes.
+    Each judge submits their own score - winner is determined when admin closes the match.
     Requirements: 14.1, 14.2, 14.3, 14.4
     """
 
-    match = models.OneToOneField(Match, on_delete=models.CASCADE, related_name="result")
+    match = models.ForeignKey(
+        Match, on_delete=models.CASCADE, related_name="results"
+    )
     judge = models.ForeignKey(
         Judge, on_delete=models.CASCADE, related_name="submitted_results"
     )
@@ -516,108 +534,15 @@ class MatchResult(models.Model):
         default=True
     )  # Results are locked by default after submission
 
+    class Meta:
+        unique_together = ["match", "judge"]  # Each judge can only submit once per match
+
     def __str__(self):
-        return f"Result: {self.match} - Winner: {self.winner}"
+        return f"Result: {self.match} - Judge: {self.judge} - Winner: {self.winner}"
 
     def save(self, *args, **kwargs):
-        """Override save to update match winner and status."""
-        is_new = not self.pk
+        """Save the result without auto-completing the match."""
         super().save(*args, **kwargs)
-        # Update the match with the winner and mark as completed
-        self.match.winner = self.winner
-        self.match.status = "completed"
-        self.match.save()
-
-        # Award points to trainees when result is recorded
-        if is_new:
-            self._award_match_points()
-
-    def _award_match_points(self):
-        """Award points to winner and loser based on match result."""
-        try:
-            # Get or create TraineePoints for both competitors
-            winner_points, _ = TraineePoints.objects.get_or_create(trainee=self.winner)
-            loser = (
-                self.match.competitor1
-                if self.match.competitor2 == self.winner
-                else self.match.competitor2
-            )
-            loser_points, _ = TraineePoints.objects.get_or_create(trainee=loser)
-
-            # Award points
-            winner_points.add_win()
-            loser_points.add_loss()
-
-            # Update leaderboards
-            self._update_leaderboards()
-        except Exception as e:
-            # Log error but don't fail the save
-            print(f"Error awarding points: {e}")
-
-    def _update_leaderboards(self):
-        """Update leaderboard rankings after points are awarded."""
-        from datetime import datetime
-
-        current_year = datetime.now().year
-        current_month = datetime.now().month
-
-        # Update all-time leaderboard
-        self._update_timeframe_leaderboard("all_time", current_year, current_month)
-        # Update yearly leaderboard
-        self._update_timeframe_leaderboard("yearly", current_year, current_month)
-        # Update monthly leaderboard
-        self._update_timeframe_leaderboard("monthly", current_year, current_month)
-
-    def _update_timeframe_leaderboard(self, timeframe, year, month):
-        """Update leaderboard for a specific timeframe."""
-        from django.db.models import Sum
-
-        if timeframe == "all_time":
-            trainees_points = TraineePoints.objects.all().order_by("-total_points")
-            for rank, tp in enumerate(trainees_points, 1):
-                Leaderboard.objects.update_or_create(
-                    trainee=tp.trainee,
-                    timeframe="all_time",
-                    year=None,
-                    month=None,
-                    defaults={
-                        "rank": rank,
-                        "points": tp.total_points,
-                        "belt_rank": tp.trainee.belt_rank,
-                    },
-                )
-        elif timeframe == "yearly":
-            # This would need match dates to filter by year
-            # For now, update all trainees' yearly rankings
-            trainees_points = TraineePoints.objects.all().order_by("-total_points")
-            for rank, tp in enumerate(trainees_points, 1):
-                Leaderboard.objects.update_or_create(
-                    trainee=tp.trainee,
-                    timeframe="yearly",
-                    year=year,
-                    month=None,
-                    defaults={
-                        "rank": rank,
-                        "points": tp.total_points,
-                        "belt_rank": tp.trainee.belt_rank,
-                    },
-                )
-        elif timeframe == "monthly":
-            # This would need match dates to filter by month
-            # For now, update all trainees' monthly rankings
-            trainees_points = TraineePoints.objects.all().order_by("-total_points")
-            for rank, tp in enumerate(trainees_points, 1):
-                Leaderboard.objects.update_or_create(
-                    trainee=tp.trainee,
-                    timeframe="monthly",
-                    year=year,
-                    month=month,
-                    defaults={
-                        "rank": rank,
-                        "points": tp.total_points,
-                        "belt_rank": tp.trainee.belt_rank,
-                    },
-                )
 
 
 class Payment(models.Model):
