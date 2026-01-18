@@ -366,6 +366,11 @@ urlpatterns = [
         name="session_list",
     ),
     path(
+        "admin/attendance/sessions/bulk-delete/",
+        attendance_views.session_bulk_delete,
+        name="session_bulk_delete",
+    ),
+    path(
         "admin/attendance/sessions/create/",
         attendance_views.session_create,
         name="session_create",

@@ -42,6 +42,18 @@ def attendance_dashboard(request):
     todays_sessions = TrainingSession.objects.filter(date=today).order_by("start_time")
     todays_sessions_count = todays_sessions.count()
 
+    # Add attendance stats to today's sessions
+    for session in todays_sessions:
+        session.present_count = session.attendance_records.filter(
+            status__in=["present", "late"]
+        ).count()
+        session.absent_count = session.attendance_records.filter(
+            status="absent"
+        ).count()
+        session.excused_count = session.attendance_records.filter(
+            status="excused"
+        ).count()
+
     # Sessions this week
     week_start = today - timedelta(days=today.weekday())
     week_end = week_start + timedelta(days=6)
@@ -62,13 +74,13 @@ def attendance_dashboard(request):
     else:
         monthly_rate = 0
 
-    # Recent Sessions (last 10)
-    recent_sessions = TrainingSession.objects.filter(date__lte=today).order_by(
+    # Past Sessions (before today)
+    past_sessions = TrainingSession.objects.filter(date__lt=today).order_by(
         "-date", "-start_time"
     )[:10]
 
-    # Add attendance stats to each session
-    for session in recent_sessions:
+    # Add attendance stats to past sessions
+    for session in past_sessions:
         session.present_count = session.attendance_records.filter(
             status__in=["present", "late"]
         ).count()
@@ -79,10 +91,22 @@ def attendance_dashboard(request):
             status="excused"
         ).count()
 
-    # Upcoming Sessions
+    # Upcoming Sessions (after today)
     upcoming_sessions = TrainingSession.objects.filter(
-        date__gte=today, status__in=["scheduled", "ongoing"]
-    ).order_by("date", "start_time")[:5]
+        date__gt=today, status__in=["scheduled", "ongoing"]
+    ).order_by("date", "start_time")[:10]
+
+    # Add attendance stats to upcoming sessions
+    for session in upcoming_sessions:
+        session.present_count = session.attendance_records.filter(
+            status__in=["present", "late"]
+        ).count()
+        session.absent_count = session.attendance_records.filter(
+            status="absent"
+        ).count()
+        session.excused_count = session.attendance_records.filter(
+            status="excused"
+        ).count()
 
     # Upcoming Events with attendance
     upcoming_events = Event.objects.filter(
@@ -141,7 +165,7 @@ def attendance_dashboard(request):
         "todays_sessions_count": todays_sessions_count,
         "weekly_sessions": weekly_sessions,
         "monthly_rate": monthly_rate,
-        "recent_sessions": recent_sessions,
+        "past_sessions": past_sessions,
         "upcoming_sessions": upcoming_sessions,
         "upcoming_events": upcoming_events,
         "top_attendees": top_attendees,
@@ -208,6 +232,28 @@ def session_list(request):
         return render(request, "admin/attendance/session_list_partial.html", context)
 
     return render(request, "admin/attendance/session_list.html", context)
+
+
+@admin_required
+def session_bulk_delete(request):
+    """
+    Bulk delete training sessions.
+    """
+    if request.method == "POST":
+        session_ids = request.POST.getlist("session_ids")
+        if not session_ids:
+            messages.error(request, "No sessions selected for deletion.")
+            return redirect("session_list")
+
+        sessions = TrainingSession.objects.filter(id__in=session_ids)
+        count = sessions.count()
+
+        sessions.delete()
+
+        messages.success(request, f"{count} session(s) deleted successfully.")
+        return redirect("session_list")
+
+    return redirect("session_list")
 
 
 @admin_required
@@ -526,16 +572,22 @@ def quick_session_create(request):
     if request.method == "POST":
         title = request.POST.get("title", "Training Session")
         session_type = request.POST.get("session_type", "regular")
-        date_str = request.POST.get("date", timezone.now().date().isoformat())
+        date_str = request.POST.get("date")
         start_time = request.POST.get("start_time", "18:00")
         end_time = request.POST.get("end_time", "20:00")
 
+        session_date = timezone.now().date()
+        if date_str:
+            try:
+                session_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except (ValueError, TypeError):
+                pass
+
         try:
-            session_date = datetime.strptime(date_str, "%Y-%m-%d").date()
             start = datetime.strptime(start_time, "%H:%M").time()
             end = datetime.strptime(end_time, "%H:%M").time()
         except (ValueError, TypeError):
-            return JsonResponse({"error": "Invalid date/time"}, status=400)
+            return JsonResponse({"error": "Invalid time"}, status=400)
 
         session = TrainingSession.objects.create(
             title=title,
@@ -543,6 +595,7 @@ def quick_session_create(request):
             date=session_date,
             start_time=start,
             end_time=end,
+            status="scheduled",
         )
 
         if request.headers.get("HX-Request"):

@@ -86,21 +86,31 @@
     <!-- Sessions Table -->
     <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
         {% if sessions %}
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-700/50">
-                    <tr class="text-xs text-gray-400 uppercase">
-                        <th class="px-6 py-4 text-left">Session</th>
-                        <th class="px-6 py-4 text-left">Date & Time</th>
-                        <th class="px-6 py-4 text-left">Location</th>
-                        <th class="px-6 py-4 text-center">Attendance</th>
-                        <th class="px-6 py-4 text-center">Status</th>
-                        <th class="px-6 py-4 text-right">Actions</th>
-                    </tr>
-                </thead>
+        <form id="bulkActionForm" method="POST" action="{% url 'session_bulk_delete' %}">
+            {% csrf_token %}
+            <input type="hidden" name="bulk_action" value="delete">
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-700/50">
+                        <tr class="text-xs text-gray-400 uppercase">
+                            <th class="px-6 py-4 w-12">
+                                <input type="checkbox" id="selectAllSessions" class="w-4 h-4 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-800">
+                            </th>
+                            <th class="px-6 py-4 text-left">Session</th>
+                            <th class="px-6 py-4 text-left">Date & Time</th>
+                            <th class="px-6 py-4 text-left">Location</th>
+                            <th class="px-6 py-4 text-center">Attendance</th>
+                            <th class="px-6 py-4 text-center">Status</th>
+                            <th class="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
                 <tbody class="divide-y divide-gray-700/50">
                     {% for session in sessions %}
                     <tr class="hover:bg-gray-700/30 transition-colors">
+                        <td class="px-6 py-4">
+                            <input type="checkbox" name="session_ids" value="{{ session.id }}" class="session-checkbox w-4 h-4 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-800">
+                        </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center
@@ -180,8 +190,22 @@
                     </tr>
                     {% endfor %}
                 </tbody>
-            </table>
-        </div>
+                    </table>
+                </div>
+
+            <div class="px-6 py-4 bg-gray-700/30 border-t border-gray-700 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span id="selectedCount" class="text-sm text-gray-400">0 sessions selected</span>
+                    <button type="submit" id="bulkDeleteBtn" disabled
+                        class="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        Delete Selected
+                    </button>
+                </div>
+            </div>
+        </form>
 
         <!-- Pagination -->
         {% if sessions.has_other_pages %}
@@ -396,6 +420,54 @@
 </div>
 
 <script>
+    // Session checkboxes and bulk actions
+    const selectAllSessions = document.getElementById('selectAllSessions');
+    const sessionCheckboxes = document.querySelectorAll('.session-checkbox');
+    const selectedCount = document.getElementById('selectedCount');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const bulkActionForm = document.getElementById('bulkActionForm');
+
+    if (selectAllSessions) {
+        selectAllSessions.addEventListener('change', function() {
+            sessionCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateSelectedCount();
+        });
+    }
+
+    sessionCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectedCount();
+            updateSelectAllCheckbox();
+        });
+    });
+
+    function updateSelectedCount() {
+        const checked = document.querySelectorAll('.session-checkbox:checked');
+        selectedCount.textContent = `${checked.length} session${checked.length !== 1 ? 's' : ''} selected`;
+        bulkDeleteBtn.disabled = checked.length === 0;
+    }
+
+    function updateSelectAllCheckbox() {
+        if (!selectAllSessions) return;
+        const allChecked = Array.from(sessionCheckboxes).every(cb => cb.checked);
+        selectAllSessions.checked = allChecked && sessionCheckboxes.length > 0;
+    }
+
+    if (bulkActionForm) {
+        bulkActionForm.addEventListener('submit', function(e) {
+            const checked = document.querySelectorAll('.session-checkbox:checked');
+            if (checked.length === 0) {
+                e.preventDefault();
+                return;
+            }
+            if (!confirm(`Are you sure you want to delete ${checked.length} session${checked.length !== 1 ? 's' : ''}? This action cannot be undone.`)) {
+                e.preventDefault();
+            }
+        });
+    }
+
     // Store all sessions for modal selection
     let allSessionsData = [];
     let selectedSessionsInModal = new Set();
@@ -405,13 +477,12 @@
         allSessionsData = [];
         const rows = document.querySelectorAll('tbody tr');
         rows.forEach(row => {
-            const titleEl = row.querySelector('td:first-child .font-medium');
-            const dateEl = row.querySelector('td:nth-child(2) .text-white');
-            const typeEl = row.querySelector('td:first-child .text-xs.text-gray-500');
+            const titleEl = row.querySelector('td:nth-child(2) .font-medium');
+            const dateEl = row.querySelector('td:nth-child(3) .text-white');
+            const typeEl = row.querySelector('td:nth-child(2) .text-xs.text-gray-500');
             const attendanceLink = row.querySelector('a[href*="/attendance/sessions/"][href*="/attendance/"]');
-            
+
             if (titleEl && attendanceLink) {
-                // Extract session ID from the attendance link
                 const href = attendanceLink.getAttribute('href');
                 const match = href.match(/\/sessions\/(\d+)\/attendance/);
                 if (match) {

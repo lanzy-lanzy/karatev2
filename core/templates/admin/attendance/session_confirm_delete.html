@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Session - BlackCobra Karate Club{% endblock %}
+
+{% block page_title %}Delete Session{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
+            <div class="p-8">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="flex-shrink-0 w-16 h-16 bg-red-600/20 rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Delete Training Session</h2>
+                        <p class="text-gray-400 mt-1">This action cannot be undone</p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-700/50 rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-white mb-3">Session Details</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Title:</span>
+                            <span class="text-white font-medium">{{ session.title }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Date:</span>
+                            <span class="text-white font-medium">{{ session.date|date:"l, F j, Y" }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Time:</span>
+                            <span class="text-white font-medium">{{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Type:</span>
+                            <span class="text-white font-medium">{{ session.get_session_type_display }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Location:</span>
+                            <span class="text-white font-medium">{{ session.location }}</span>
+                        </div>
+                        {% if session.attendance_records.count > 0 %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Attendance Records:</span>
+                            <span class="text-red-400 font-medium">{{ session.attendance_records.count }} record(s) will be deleted</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="bg-red-900/20 border border-red-700/50 rounded-xl p-4 mb-6">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-red-300 font-medium">Warning</p>
+                            <p class="text-red-200/80 text-sm mt-1">
+                                Deleting this session will permanently remove all associated attendance records and cannot be undone.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST" class="flex gap-3">
+                    {% csrf_token %}
+                    <button type="submit" class="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors">
+                        Delete Session
+                    </button>
+                    <a href="{% url 'session_list' %}"
+                        class="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-colors text-center">
+                        Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
