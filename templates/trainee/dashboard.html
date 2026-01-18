@@ -176,6 +176,67 @@
         </div>
     </div>
 
+    <!-- Leaderboard Section -->
+    <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden feature-card">
+        <div class="px-6 py-4 border-b border-gray-700 bg-gradient-to-r from-gray-750 to-gray-800">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-white">Leaderboard</h3>
+                    <p class="text-sm text-gray-400 mt-1">See how you rank among other trainees</p>
+                </div>
+                <a href="{% url 'leaderboard_all_time' %}" class="text-sm text-red-400 hover:text-red-300 font-semibold">View Full Leaderboard →</a>
+            </div>
+        </div>
+        <div class="divide-y divide-gray-700">
+            {% if leaderboard_entries %}
+                {% for entry in leaderboard_entries %}
+                <div class="px-6 py-4 hover:bg-gray-750 transition-colors {% if entry.trainee == trainee %}bg-purple-500 bg-opacity-10{% endif %}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-shrink-0">
+                                {% if entry.rank == 1 %}
+                                <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-white font-bold">🥇</div>
+                                {% elif entry.rank == 2 %}
+                                <div class="w-10 h-10 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center text-white font-bold">🥈</div>
+                                {% elif entry.rank == 3 %}
+                                <div class="w-10 h-10 bg-gradient-to-br from-amber-600 to-amber-700 rounded-full flex items-center justify-center text-white font-bold">🥉</div>
+                                {% else %}
+                                <div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-white font-bold text-sm">#{{ entry.rank }}</div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <h4 class="text-sm font-semibold text-white">
+                                        {{ entry.trainee.profile.user.get_full_name|default:entry.trainee.profile.user.username }}
+                                    </h4>
+                                    {% if entry.trainee == trainee %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-500 bg-opacity-20 text-purple-300">You</span>
+                                    {% endif %}
+                                </div>
+                                <div class="flex items-center space-x-2 mt-1">
+                                    <span class="text-xs text-gray-400">{{ entry.get_belt_rank_display }} Belt</span>
+                                    {% if entry.trainee == trainee %}
+                                    <span class="text-xs text-purple-300">New Member</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-red-400">{{ entry.points }}</p>
+                            <p class="text-xs text-gray-400">points</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="px-6 py-12 text-center">
+                    <div class="text-4xl mb-2">🏆</div>
+                    <p class="text-sm text-gray-400">No leaderboard data yet</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Belt Rank Progress Card -->
     {% if next_belt_threshold %}
     <div class="bg-gray-800 rounded-2xl border border-gray-700 p-8 feature-card">

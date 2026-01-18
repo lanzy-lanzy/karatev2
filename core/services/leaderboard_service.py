@@ -38,6 +38,16 @@ class LeaderboardService:
         if month is None:
             month = datetime.now().month
         
+        # Ensure all active trainees have a TraineePoints record
+        # This ensures new trainees appear on the leaderboard
+        active_trainees = Trainee.objects.filter(status='active', archived=False)
+        for trainee in active_trainees:
+            points_record, created = TraineePoints.objects.get_or_create(trainee=trainee)
+            
+            # If this is a new trainee with 0 points, set initial points to belt rank threshold
+            if created and points_record.total_points == 0:
+                PointsService.sync_points_with_belt(trainee)
+        
         # Get all trainees sorted by belt rank first, then points
         # master_degree is highest, white is lowest
         trainees_points = TraineePoints.objects.all().annotate(

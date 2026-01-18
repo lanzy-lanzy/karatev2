@@ -109,6 +109,9 @@ def dashboard_view(request):
     leaderboard_entry = LeaderboardService.get_trainee_rank(trainee, "all_time")
     trainee_rank = leaderboard_entry.rank if leaderboard_entry else None
 
+    # Get leaderboard entries for display
+    leaderboard_entries = LeaderboardService.get_leaderboard("all_time")
+
     context = {
         "trainee": trainee,
         "registered_events": registered_events,
@@ -127,6 +130,8 @@ def dashboard_view(request):
         # Achievements
         "trainee_achievements": trainee_achievements,
         "total_achievement_points": total_achievement_points,
+        # Leaderboard
+        "leaderboard_entries": leaderboard_entries,
     }
 
     return render(request, "trainee/dashboard.html", context)

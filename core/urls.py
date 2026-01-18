@@ -273,6 +273,37 @@ urlpatterns = [
     path(
         "admin/reports/export/", admin_views.reports_export, name="admin_reports_export"
     ),
+    # Extended Reports URLs
+    path(
+        "admin/reports/belt-promotion/",
+        admin_views.belt_promotion_report,
+        name="admin_belt_promotion_report",
+    ),
+    path(
+        "admin/reports/skill-progression/",
+        admin_views.skill_progression_report,
+        name="admin_skill_progression_report",
+    ),
+    path(
+        "admin/reports/tournament-participation/",
+        admin_views.tournament_participation_report,
+        name="admin_tournament_participation_report",
+    ),
+    path(
+        "admin/reports/performance-evaluation/",
+        admin_views.performance_evaluation_report,
+        name="admin_performance_evaluation_report",
+    ),
+    path(
+        "admin/reports/competition-results/",
+        admin_views.competition_results_report,
+        name="admin_competition_results_report",
+    ),
+    path(
+        "admin/reports/trainee-milestones/",
+        admin_views.trainee_milestones_report,
+        name="admin_trainee_milestones_report",
+    ),
     # Belt Rank Promotion URLs
     path(
         "admin/belt-promotion/",

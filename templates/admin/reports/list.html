@@ -187,6 +187,165 @@
         </div>
     </div>
 
+    <!-- Extended Reports Section -->
+    <div class="mt-8">
+        <h3 class="text-2xl font-bold text-white mb-4">Extended Reports</h3>
+        <p class="text-gray-400 mb-6">Comprehensive training and performance reports</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Belt Promotion History Report -->
+            <a href="{% url 'admin_belt_promotion_report' %}"
+               class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden hover:border-orange-500/50 transition-colors group block">
+                <div class="p-6">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 bg-orange-600/20 rounded-xl flex items-center justify-center group-hover:bg-orange-600/30 transition-colors">
+                            <svg class="w-7 h-7 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Belt Promotion History</h3>
+                            <p class="text-gray-400 text-sm">Track belt rank progressions</p>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-300">
+                        <ul class="space-y-1">
+                            <li>• Promotion timeline</li>
+                            <li>• Points earned</li>
+                            <li>• Promotion type</li>
+                        </ul>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Skill Progression Report -->
+            <a href="{% url 'admin_skill_progression_report' %}"
+               class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden hover:border-cyan-500/50 transition-colors group block">
+                <div class="p-6">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 bg-cyan-600/20 rounded-xl flex items-center justify-center group-hover:bg-cyan-600/30 transition-colors">
+                            <svg class="w-7 h-7 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Skill Progression</h3>
+                            <p class="text-gray-400 text-sm">Individual skill development</p>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-300">
+                        <ul class="space-y-1">
+                            <li>• Evaluation history</li>
+                            <li>• Achievement tracking</li>
+                            <li>• Performance metrics</li>
+                        </ul>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Tournament Participation Report -->
+            <a href="{% url 'admin_tournament_participation_report' %}"
+               class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden hover:border-indigo-500/50 transition-colors group block">
+                <div class="p-6">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 bg-indigo-600/20 rounded-xl flex items-center justify-center group-hover:bg-indigo-600/30 transition-colors">
+                            <svg class="w-7 h-7 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Tournament Participation</h3>
+                            <p class="text-gray-400 text-sm">Event participation & matches</p>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-300">
+                        <ul class="space-y-1">
+                            <li>• Event registrations</li>
+                            <li>• Match history</li>
+                            <li>• Participation stats</li>
+                        </ul>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Performance Evaluation Report -->
+            <a href="{% url 'admin_performance_evaluation_report' %}"
+               class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden hover:border-pink-500/50 transition-colors group block">
+                <div class="p-6">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 bg-pink-600/20 rounded-xl flex items-center justify-center group-hover:bg-pink-600/30 transition-colors">
+                            <svg class="w-7 h-7 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Performance Evaluation</h3>
+                            <p class="text-gray-400 text-sm">Detailed evaluation summaries</p>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-300">
+                        <ul class="space-y-1">
+                            <li>• All evaluation criteria</li>
+                            <li>• Rating analysis</li>
+                            <li>• Strengths & improvements</li>
+                        </ul>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Competition Results Report -->
+            <a href="{% url 'admin_competition_results_report' %}"
+               class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden hover:border-red-500/50 transition-colors group block">
+                <div class="p-6">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 bg-red-600/20 rounded-xl flex items-center justify-center group-hover:bg-red-600/30 transition-colors">
+                            <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806-1.946l-4-4z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12c0 5.523 4.477 10 10 10s10-4.477 10-10S17.523 2 12 2 2 6.477 2 12z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Competition Results</h3>
+                            <p class="text-gray-400 text-sm">Official match results</p>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-300">
+                        <ul class="space-y-1">
+                            <li>• Match outcomes</li>
+                            <li>• Judge scoring</li>
+                            <li>• Winner details</li>
+                        </ul>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Trainee Milestones Report -->
+            <a href="{% url 'admin_trainee_milestones_report' %}"
+               class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden hover:border-teal-500/50 transition-colors group block">
+                <div class="p-6">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 bg-teal-600/20 rounded-xl flex items-center justify-center group-hover:bg-teal-600/30 transition-colors">
+                            <svg class="w-7 h-7 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Trainee Milestones</h3>
+                            <p class="text-gray-400 text-sm">Key achievements & events</p>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-300">
+                        <ul class="space-y-1">
+                            <li>• Achievement timeline</li>
+                            <li>• Belt promotions</li>
+                            <li>• Match victories</li>
+                        </ul>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
     <!-- Report Preview Section -->
     {% if report_data %}
     <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
@@ -272,7 +431,7 @@
                         <p class="text-sm text-gray-400">New (Period)</p>
                     </div>
                 </div>
-                
+
                 <!-- Belt Rank Breakdown -->
                 {% if report_data.belt_rank_details %}
                 <div>
@@ -348,7 +507,7 @@
                         <p class="text-sm text-red-300/70 mt-1">Overdue</p>
                     </div>
                 </div>
-                
+
                 <!-- Revenue by Type -->
                 {% if report_data.payments_by_type %}
                 <div class="bg-gray-700/30 rounded-xl border border-gray-600 overflow-hidden">
@@ -377,7 +536,7 @@
                     </div>
                 </div>
                 {% endif %}
-                
+
                 <!-- Outstanding Balances -->
                 {% if report_data.outstanding_balances %}
                 <div class="bg-gray-700/30 rounded-xl border border-gray-600 overflow-hidden">
@@ -431,7 +590,7 @@
                         <p class="text-white font-medium mt-1">{{ report_data.event.max_participants }}</p>
                     </div>
                 </div>
-                
+
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="bg-blue-900/30 rounded-xl p-4 text-center border border-blue-700/50">
@@ -451,7 +610,7 @@
                         <p class="text-sm text-yellow-300/70">Scheduled</p>
                     </div>
                 </div>
-                
+
                 <!-- Participants by Belt -->
                 {% if report_data.participants_by_belt %}
                 <div class="bg-gray-700/30 rounded-xl border border-gray-600 overflow-hidden">
@@ -491,12 +650,12 @@
 <div id="reportModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeReportModal()"></div>
-        
+
         <div class="inline-block align-bottom bg-gray-800 rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-700">
             <form method="POST" action="{% url 'admin_reports' %}">
                 {% csrf_token %}
                 <input type="hidden" name="report_type" id="modal_report_type" value="">
-                
+
                 <div class="bg-gray-800 px-6 pt-6 pb-4">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="text-xl font-bold text-white" id="modal_title">Generate Report</h3>
@@ -506,7 +665,7 @@
                             </svg>
                         </button>
                     </div>
-                    
+
                     <!-- Date Range (for membership and financial) -->
                     <div id="dateRangeSection" class="space-y-4">
                         <div>
@@ -520,7 +679,7 @@
                                 class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         </div>
                     </div>
-                    
+
                     <!-- Event Selection (for event reports) -->
                     <div id="eventSection" class="hidden">
                         <label class="block text-sm font-medium text-gray-300 mb-2">Select Event</label>
@@ -533,9 +692,9 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="bg-gray-800 px-6 py-4 border-t border-gray-700 flex justify-end gap-3">
-                    <button type="button" onclick="closeReportModal()" 
+                    <button type="button" onclick="closeReportModal()"
                         class="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
                         Cancel
                     </button>
@@ -557,9 +716,9 @@
         const dateRangeSection = document.getElementById('dateRangeSection');
         const eventSection = document.getElementById('eventSection');
         const submitBtn = document.getElementById('modal_submit_btn');
-        
+
         reportTypeInput.value = reportType;
-        
+
         if (reportType === 'membership') {
             modalTitle.textContent = 'Generate Membership Report';
             dateRangeSection.classList.remove('hidden');
@@ -576,17 +735,17 @@
             eventSection.classList.remove('hidden');
             submitBtn.className = 'px-6 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-colors';
         }
-        
+
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
-    
+
     function closeReportModal() {
         const modal = document.getElementById('reportModal');
         modal.classList.add('hidden');
         document.body.style.overflow = '';
     }
-    
+
     // Close modal on escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
