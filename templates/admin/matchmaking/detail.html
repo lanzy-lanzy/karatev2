@@ -2,10 +2,52 @@
 
 {% block title %}Match Detail - BlackCobra Karate Club{% endblock %}
 
+{% block extra_css %}
+<style>
+    [x-cloak] { display: none !important; }
+</style>
+{% endblock %}
+
 {% block page_title %}Match Detail{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-6" x-data="{ 
+    selectedJudge: null, 
+    showModal: false,
+    results: {
+        {% for r in judge_results %}
+        '{{ r.judge.id }}': {
+            'judge_name': '{{ r.judge.profile.user.get_full_name|escapejs }}',
+            'category': '{{ match.get_match_type_display|escapejs }}',
+            'is_promotion': {{ match.is_promotion_match|yesno:'true,false' }},
+            'c1': {
+                'name': '{{ match.competitor1.profile.user.first_name|escapejs }}',
+                'sparring': {{ r.c1_sparring_score }},
+                'penan': {{ r.c1_penan_score }},
+                'judo': {{ r.c1_judo_score }},
+                'breaking': {{ r.c1_breaking_score }},
+                'total': {{ r.competitor1_score }}
+            },
+            'c2': {
+                'name': '{{ match.competitor2.profile.user.first_name|escapejs }}',
+                'sparring': {{ r.c2_sparring_score }},
+                'penan': {{ r.c2_penan_score }},
+                'judo': {{ r.c2_judo_score }},
+                'breaking': {{ r.c2_breaking_score }},
+                'total': {{ r.competitor2_score }}
+            },
+            'winner_id': '{{ r.winner.id }}',
+            'notes': '{{ r.notes|default:''|escapejs }}'
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    },
+    openBreakdown(judgeId) {
+        if (this.results[judgeId]) {
+            this.selectedJudge = this.results[judgeId];
+            this.showModal = true;
+        }
+    }
+}">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -20,8 +62,15 @@
                 </svg>
                 Back to Monitor
             </a>
-            <a href="{% url 'admin_match_edit' match.id %}" 
-               class="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-white btn-primary rounded-lg">
+                <a href="{% url 'admin_match_export_pdf' match.id %}" 
+                   class="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-all">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Export PDF
+                </a>
+                <a href="{% url 'admin_match_edit' match.id %}" 
+                   class="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-white btn-primary rounded-lg">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                 </svg>
@@ -352,26 +401,30 @@
             {% if judge_assignments %}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {% for assignment in judge_assignments %}
-                <div class="flex items-center gap-4 p-4 bg-gray-800/50 rounded-xl {% if assignment.judge.id in submitted_judge_ids %}border border-green-500/30{% endif %}">
+                <div @click="openBreakdown({{ assignment.judge.id }})" 
+                     class="flex items-center gap-4 p-4 bg-gray-800/50 rounded-xl transition-all {% if assignment.judge.id in submitted_judge_ids %}border border-green-500/30 cursor-pointer hover:bg-gray-700/50 hover:scale-[1.02] active:scale-[0.98]{% else %}opacity-60 grayscale-[0.5]{% endif %}">
                     <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center text-white font-bold relative">
                         {{ assignment.judge.profile.user.first_name|slice:":1" }}{{ assignment.judge.profile.user.last_name|slice:":1" }}
                         {% if assignment.judge.id in submitted_judge_ids %}
-                        <div class="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                        <div class="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-gray-800">
                             <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
                             </svg>
                         </div>
                         {% endif %}
                     </div>
-                    <div>
+                    <div class="flex-1">
                         <p class="text-sm font-medium text-white">
                             {{ assignment.judge.profile.user.get_full_name|default:assignment.judge.profile.user.username }}
                         </p>
                         <p class="text-xs text-gray-400">{{ assignment.judge.certification_level|title }} Level</p>
                         {% if assignment.judge.id in submitted_judge_ids %}
-                        <span class="text-xs text-green-400">Score submitted</span>
+                        <div class="flex items-center justify-between mt-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-green-400">Score submitted</span>
+                            <span class="text-[10px] font-bold text-gray-500 group-hover:text-blue-400">View Details →</span>
+                        </div>
                         {% else %}
-                        <span class="text-xs text-yellow-400">Pending submission</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-yellow-500/70 mt-1 block">Pending submission</span>
                         {% endif %}
                     </div>
                 </div>
@@ -464,5 +517,117 @@
         </div>
     </div>
     {% endif %}
+    <!-- Score Breakdown Modal -->
+    <div x-show="showModal" 
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
+         x-cloak>
+        <!-- Backdrop -->
+        <div x-show="showModal"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click="showModal = false"
+             class="absolute inset-0 bg-gray-900/80 backdrop-blur-sm"></div>
+
+        <!-- Modal Content -->
+        <div x-show="showModal"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             class="relative w-full max-w-2xl bg-gray-800 border border-gray-700 rounded-3xl shadow-2xl overflow-hidden glass-effect">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-700 bg-gray-800/50 flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-bold text-white" x-text="'Score Breakdown: ' + selectedJudge?.judge_name"></h3>
+                    <p class="text-xs text-gray-400 mt-1" x-text="selectedJudge?.is_promotion ? 'Promotion Match' : selectedJudge?.category + ' Match'"></p>
+                </div>
+                <button @click="showModal = false" class="p-2 text-gray-400 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6">
+                <!-- Comparison Table -->
+                <div class="overflow-hidden rounded-2xl border border-gray-700 bg-gray-900/50 mb-6">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-800/50">
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Category</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-blue-400 uppercase tracking-widest" x-text="selectedJudge?.c1.name"></th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-red-400 uppercase tracking-widest" x-text="selectedJudge?.c2.name"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-700/50">
+                            <!-- Show all categories if promotion match, else only the specific one -->
+                            <template x-if="selectedJudge?.is_promotion">
+                                <template x-for="cat in ['sparring', 'penan', 'judo', 'breaking']">
+                                    <tr class="hover:bg-gray-800/20 transition-colors">
+                                        <td class="px-4 py-3 text-sm font-medium text-gray-300 capitalize" x-text="cat"></td>
+                                        <td class="px-4 py-3 text-center text-lg font-bold text-white" x-text="selectedJudge?.c1[cat]"></td>
+                                        <td class="px-4 py-3 text-center text-lg font-bold text-white" x-text="selectedJudge?.c2[cat]"></td>
+                                    </tr>
+                                </template>
+                            </template>
+                            
+                            <!-- If not promotion, show the main scores -->
+                            <template x-if="!selectedJudge?.is_promotion">
+                                <tr class="hover:bg-gray-800/20 transition-colors">
+                                    <td class="px-4 py-3 text-sm font-medium text-gray-300" x-text="selectedJudge?.category"></td>
+                                    <td class="px-4 py-3 text-center text-2xl font-black text-white" x-text="selectedJudge?.c1.total"></td>
+                                    <td class="px-4 py-3 text-center text-2xl font-black text-white" x-text="selectedJudge?.c2.total"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                        <tfoot class="bg-gray-800/50 border-t-2 border-gray-700">
+                            <tr>
+                                <td class="px-4 py-4 text-sm font-bold text-white uppercase tracking-widest">Total Score</td>
+                                <td class="px-4 py-4 text-center text-3xl font-black" 
+                                    :class="selectedJudge?.c1.total > selectedJudge?.c2.total ? 'text-green-400' : 'text-white'"
+                                    x-text="selectedJudge?.c1.total"></td>
+                                <td class="px-4 py-4 text-center text-3xl font-black"
+                                    :class="selectedJudge?.c2.total > selectedJudge?.c1.total ? 'text-green-400' : 'text-white'"
+                                    x-text="selectedJudge?.c2.total"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Winner and Notes -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-2xl bg-gray-900/50 border border-gray-700/50">
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Winner Picked</p>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full" :class="selectedJudge?.winner_id == '{{ match.competitor1.id }}' ? 'bg-blue-500' : 'bg-red-500'"></span>
+                            <span class="text-lg font-bold text-white underline decoration-2 underline-offset-4" 
+                                  :class="selectedJudge?.winner_id == '{{ match.competitor1.id }}' ? 'decoration-blue-500/50' : 'decoration-red-500/50'"
+                                  x-text="selectedJudge?.winner_id == '{{ match.competitor1.id }}' ? selectedJudge?.c1.name : selectedJudge?.c2.name"></span>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-gray-900/50 border border-gray-700/50">
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Judge's Notes</p>
+                        <p class="text-sm text-gray-300 italic" x-text="selectedJudge?.notes || 'No notes provided for this submission.'"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-gray-900/50 border-t border-gray-700 flex justify-end">
+                <button @click="showModal = false" 
+                        class="px-6 py-2 text-sm font-bold text-white bg-gray-700 hover:bg-gray-600 rounded-xl transition-all">
+                    Close Breakdown
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

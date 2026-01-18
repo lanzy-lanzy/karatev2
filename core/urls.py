@@ -206,9 +206,19 @@ urlpatterns = [
         name="admin_match_monitor",
     ),
     path(
+        "admin/matchmaking/monitor/export/pdf/",
+        admin_views.match_monitor_export_pdf,
+        name="admin_match_monitor_export_pdf",
+    ),
+    path(
         "admin/matchmaking/<int:match_id>/detail/",
         admin_views.match_detail,
         name="admin_match_detail",
+    ),
+    path(
+        "admin/matchmaking/<int:match_id>/export/pdf/",
+        admin_views.match_export_pdf,
+        name="admin_match_export_pdf",
     ),
     path(
         "admin/matchmaking/<int:match_id>/close/",

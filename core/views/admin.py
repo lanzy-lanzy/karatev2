@@ -4350,6 +4350,459 @@ def match_monitor(request):
 
 
 @admin_required
+def match_monitor_export_pdf(request):
+    """
+    Generate a comprehensive PDF report for the Match Monitor.
+    Supports filtering by event, match type, status, and search.
+    """
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.platypus import (
+        SimpleDocTemplate,
+        Table,
+        TableStyle,
+        Paragraph,
+        Spacer,
+        Image,
+        PageBreak,
+    )
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    from datetime import datetime
+    import os
+    from django.db.models import Q, Prefetch
+    from core.models import Match, MatchResult
+
+    # Replicate filtering logic from match_monitor
+    matches = Match.objects.filter(archived=False).select_related(
+        "event",
+        "competitor1__profile__user",
+        "competitor2__profile__user",
+        "winner__profile__user",
+    ).prefetch_related(
+        "judge_assignments__judge__profile__user",
+        Prefetch(
+            "results",
+            queryset=MatchResult.objects.select_related(
+                "judge__profile__user", "winner__profile__user"
+            ),
+        ),
+    ).order_by("-scheduled_time")
+
+    event_filter = request.GET.get("event_filter", "").strip()
+    if event_filter:
+        matches = matches.filter(event_id=event_filter)
+
+    match_type_filter = request.GET.get("match_type_filter", "").strip()
+    if match_type_filter:
+        matches = matches.filter(match_type=match_type_filter)
+
+    status_filter = request.GET.get("status_filter", "").strip()
+    if status_filter:
+        matches = matches.filter(status=status_filter)
+
+    search = request.GET.get("search", "").strip()
+    if search:
+        matches = matches.filter(
+            Q(competitor1__profile__user__first_name__icontains=search)
+            | Q(competitor1__profile__user__last_name__icontains=search)
+            | Q(competitor2__profile__user__first_name__icontains=search)
+            | Q(competitor2__profile__user__last_name__icontains=search)
+            | Q(event__name__icontains=search)
+        )
+
+    # Statistics for the report
+    total_matches = matches.count()
+    completed = matches.filter(status="completed").count()
+    pending = matches.filter(status="scheduled").count()
+    ongoing = matches.filter(status="ongoing").count()
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'attachment; filename="Match_Monitor_Report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf"'
+    )
+
+    doc = SimpleDocTemplate(
+        response, pagesize=landscape(A4), topMargin=0.5 * inch, bottomMargin=0.5 * inch
+    )
+    story = []
+    styles = getSampleStyleSheet()
+
+    # Define Styles
+    title_style = ParagraphStyle(
+        "ReportTitle",
+        parent=styles["Heading1"],
+        fontSize=24,
+        textColor=colors.HexColor("#ff6b35"),
+        alignment=TA_CENTER,
+        spaceAfter=12,
+    )
+
+    section_style = ParagraphStyle(
+        "SectionStyle",
+        parent=styles["Heading2"],
+        fontSize=14,
+        textColor=colors.HexColor("#1e293b"),
+        spaceBefore=12,
+        spaceAfter=8,
+        borderPadding=5,
+        borderWidth=0,
+    )
+
+    # Header with Dual Logos
+    logo1_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "core", "static", "images", "black_cobra_logo.jpg")
+    logo2_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "core", "static", "images", "judo_logo.png")
+    
+    logo_size = 0.8 * inch
+    l1 = Image(logo1_path, width=logo_size, height=logo_size) if os.path.exists(logo1_path) else ""
+    l2 = Image(logo2_path, width=logo_size, height=logo_size) if os.path.exists(logo2_path) else ""
+    
+    header_table = Table([[l1, Paragraph("<b>BLACKCOBRA KARATE CLUB</b><br/><font size=12>MATCH MONITOR COMPREHENSIVE REPORT</font>", title_style), l2]], colWidths=[1.5 * inch, 7 * inch, 1.5 * inch])
+    header_table.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("ALIGN", (0, 0), (0, 0), "LEFT"),
+        ("ALIGN", (1, 0), (1, 0), "CENTER"),
+        ("ALIGN", (2, 0), (2, 0), "RIGHT"),
+    ]))
+    story.append(header_table)
+    story.append(Spacer(1, 0.2 * inch))
+
+    # Summary Statistics Table
+    story.append(Paragraph("SUMMARY STATISTICS", section_style))
+    stats_data = [
+        ["Total Matches", "Completed", "Scheduled/Pending", "Ongoing", "Generated On"],
+        [str(total_matches), str(completed), str(pending), str(ongoing), datetime.now().strftime("%B %d, %Y %H:%M")]
+    ]
+    stats_table = Table(stats_data, colWidths=[2 * inch, 1.5 * inch, 2 * inch, 1.5 * inch, 3.5 * inch])
+    stats_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("PADDING", (0, 0), (-1, -1), 8),
+    ]))
+    story.append(stats_table)
+    story.append(Spacer(1, 0.3 * inch))
+
+    # Detailed Match List Table
+    story.append(Paragraph("MATCH MONITORING DETAILS", section_style))
+    
+    match_header = ["ID", "Event", "Type", "Competitor 1", "Score", "Score", "Competitor 2", "Winner", "Status"]
+    match_data = [match_header]
+    
+    for m in matches:
+        c1_score = sum(r.competitor1_score for r in m.results.all())
+        c2_score = sum(r.competitor2_score for r in m.results.all())
+        
+        match_data.append([
+            f"#{m.id}",
+            Paragraph(m.event.name[:30] + "..." if len(m.event.name) > 30 else m.event.name, styles["Normal"]),
+            m.get_match_type_display(),
+            Paragraph(m.competitor1.profile.user.get_full_name(), styles["Normal"]),
+            str(c1_score),
+            str(c2_score),
+            Paragraph(m.competitor2.profile.user.get_full_name(), styles["Normal"]),
+            m.winner.profile.user.first_name if m.winner else "-",
+            m.get_status_display()
+        ])
+    
+    # Table width optimized for landscape A4
+    col_widths = [0.6 * inch, 1.8 * inch, 1.0 * inch, 1.6 * inch, 0.6 * inch, 0.6 * inch, 1.6 * inch, 1.2 * inch, 1.0 * inch]
+    match_table = Table(match_data, colWidths=col_widths, repeatRows=1)
+    match_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#ff6b35")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, 0), 10),
+        ("FONTSIZE", (0, 1), (-1, -1), 9),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")]),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+    ]))
+    story.append(match_table)
+    
+    # Final Signatories section
+    story.append(Spacer(1, 0.5 * inch))
+    
+    sig_text_style = ParagraphStyle(
+        "SigTextStyle",
+        parent=styles["Normal"],
+        fontSize=10,
+        alignment=TA_CENTER,
+    )
+
+    sig_data = [
+        ["_" * 35, "" , "_" * 35],
+        [
+            Paragraph("<b>Tournament Director</b>", sig_text_style), 
+            "", 
+            Paragraph("<b>Chief Official</b>", sig_text_style)
+        ],
+        [
+            Paragraph("Name:", sig_text_style), 
+            Paragraph("Date:", sig_text_style), 
+            Paragraph("Name:", sig_text_style)
+        ]
+    ]
+    sig_table = Table(sig_data, colWidths=[3.5 * inch, 3 * inch, 3.5 * inch])
+    sig_table.setStyle(TableStyle([
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("FONTSIZE", (0, 0), (-1, -1), 10),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+    ]))
+    story.append(sig_table)
+
+    doc.build(story)
+    return response
+
+
+@admin_required
+def match_export_pdf(request, match_id):
+    """
+    Generate a detailed PDF report for a specific match with judge signatories.
+    """
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.platypus import (
+        SimpleDocTemplate,
+        Table,
+        TableStyle,
+        Paragraph,
+        Spacer,
+        Image,
+    )
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+    from datetime import datetime
+    import os
+    from core.models import Match, MatchResult
+
+    match = get_object_or_404(
+        Match.objects.select_related(
+            "event",
+            "competitor1__profile__user",
+            "competitor2__profile__user",
+            "winner__profile__user",
+        ).prefetch_related(
+            "judge_assignments__judge__profile__user",
+            "results__judge__profile__user",
+        ),
+        id=match_id,
+    )
+
+    judge_results = match.results.all()
+    judge_assignments = match.judge_assignments.all()
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'attachment; filename="Match_{match.id}_Result_{datetime.now().strftime("%Y%m%d")}.pdf"'
+    )
+
+    doc = SimpleDocTemplate(
+        response, pagesize=A4, topMargin=0.5 * inch, bottomMargin=0.5 * inch
+    )
+    story = []
+    styles = getSampleStyleSheet()
+
+    # Define Styles
+    title_style = ParagraphStyle(
+        "ReportTitle",
+        parent=styles["Heading1"],
+        fontSize=20,
+        textColor=colors.HexColor("#ff6b35"),
+        alignment=TA_CENTER,
+        spaceAfter=12,
+    )
+
+    label_style = ParagraphStyle(
+        "LabelStyle",
+        parent=styles["Normal"],
+        fontSize=10,
+        fontName="Helvetica-Bold",
+        textColor=colors.grey,
+    )
+
+    value_style = ParagraphStyle(
+        "ValueStyle",
+        parent=styles["Normal"],
+        fontSize=11,
+        fontName="Helvetica",
+        textColor=colors.black,
+    )
+
+    # Header section with Logos
+    logo1_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
+        "core", "static", "images", "black_cobra_logo.jpg"
+    )
+    logo2_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
+        "core", "static", "images", "judo_logo.png"
+    )
+    
+    header_table_data = []
+    logo_size = 0.8 * inch
+    
+    l1 = None
+    if os.path.exists(logo1_path):
+        try:
+            l1 = Image(logo1_path, width=logo_size, height=logo_size)
+        except:
+            pass
+
+    l2 = None
+    if os.path.exists(logo2_path):
+        try:
+            l2 = Image(logo2_path, width=logo_size, height=logo_size)
+        except:
+            pass
+
+    club_name = Paragraph("<b>BLACKCOBRA KARATE CLUB</b>", title_style)
+    
+    # Create a layout table for the header: [Logo1, Title, Logo2]
+    header_row = [l1 or "", club_name, l2 or ""]
+    header_table = Table([header_row], colWidths=[1.2 * inch, 4.0 * inch, 1.2 * inch])
+    header_table.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("ALIGN", (0, 0), (0, 0), "LEFT"),
+        ("ALIGN", (1, 0), (1, 0), "CENTER"),
+        ("ALIGN", (2, 0), (2, 0), "RIGHT"),
+    ]))
+    
+    story.append(header_table)
+    story.append(Spacer(1, 0.1 * inch))
+
+    story.append(Paragraph("MATCH RESULT REPORT", styles["Heading2"]))
+    story.append(Spacer(1, 0.2 * inch))
+
+    # Match Info Table
+    match_info = [
+        [Paragraph("Event:", label_style), Paragraph(match.event.name, value_style)],
+        [Paragraph("Date:", label_style), Paragraph(match.scheduled_time.strftime("%B %d, %Y %H:%M"), value_style)],
+        [Paragraph("Match Type:", label_style), Paragraph(match.get_match_type_display(), value_style)],
+        [Paragraph("Status:", label_style), Paragraph(match.get_status_display(), value_style)],
+    ]
+    
+    info_table = Table(match_info, colWidths=[1.5 * inch, 4.5 * inch])
+    info_table.setStyle(TableStyle([
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+    story.append(info_table)
+    story.append(Spacer(1, 0.3 * inch))
+
+    # Competitors Face-off Table
+    competitor_data = [
+        [
+            Paragraph(f"<b>{match.competitor1.profile.user.get_full_name()}</b><br/>Competitor 1", TA_CENTER_style := ParagraphStyle("c1", parent=styles["Normal"], alignment=TA_CENTER)),
+            Paragraph("<b>VS</b>", TA_CENTER_style),
+            Paragraph(f"<b>{match.competitor2.profile.user.get_full_name()}</b><br/>Competitor 2", TA_CENTER_style),
+        ]
+    ]
+    comp_table = Table(competitor_data, colWidths=[2.5 * inch, 1.0 * inch, 2.5 * inch])
+    comp_table.setStyle(TableStyle([
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("BACKGROUND", (0, 0), (0, 0), colors.HexColor("#eff6ff")),
+        ("BACKGROUND", (2, 0), (2, 0), colors.HexColor("#fff1f2")),
+        ("BOX", (0, 0), (0, 0), 1, colors.blue),
+        ("BOX", (2, 0), (2, 0), 1, colors.red),
+    ]))
+    story.append(comp_table)
+    story.append(Spacer(1, 0.3 * inch))
+
+    # Winner Declaration
+    if match.winner:
+        winner_box_style = ParagraphStyle(
+            "WinnerBox",
+            parent=styles["Normal"],
+            fontSize=14,
+            fontName="Helvetica-Bold",
+            textColor=colors.white,
+            backgroundColor=colors.HexColor("#10b981"),
+            alignment=TA_CENTER,
+            borderPadding=10,
+        )
+        story.append(Paragraph(f"OFFICIAL WINNER: {match.winner.profile.user.get_full_name()}", winner_box_style))
+        story.append(Spacer(1, 0.4 * inch))
+
+    # Judge Scores Table
+    story.append(Paragraph("<b>JUDGE SCORING SUMMARY</b>", styles["Heading3"]))
+    story.append(Spacer(1, 0.1 * inch))
+    
+    score_header = ["Judge", f"{match.competitor1.profile.user.first_name}", f"{match.competitor2.profile.user.first_name}", "Winner Pick"]
+    score_data = [score_header]
+    
+    for result in judge_results:
+        score_data.append([
+            result.judge.profile.user.get_full_name(),
+            str(result.competitor1_score),
+            str(result.competitor2_score),
+            result.winner.profile.user.first_name if result.winner else "N/A"
+        ])
+    
+    score_table = Table(score_data, colWidths=[2.5 * inch, 1.0 * inch, 1.0 * inch, 1.5 * inch])
+    score_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#ff6b35")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f9f9f9")]),
+    ]))
+    story.append(score_table)
+    story.append(Spacer(1, 0.5 * inch))
+
+    # Signatory Section
+    story.append(Paragraph("<b>OFFICIAL SIGNATORIES</b>", styles["Heading3"]))
+    story.append(Spacer(1, 0.2 * inch))
+
+    sig_elements = []
+    for assignment in judge_assignments:
+        judge_name = assignment.judge.profile.user.get_full_name()
+        judge_level = assignment.judge.get_certification_level_display()
+        
+        sig_box = [
+            [Paragraph(f"<b>{judge_name}</b><br/>{judge_level} Judge", styles["Normal"])],
+            [Spacer(1, 0.4 * inch)],
+            [Paragraph("__________________________<br/>Signature & Date", styles["Normal"])]
+        ]
+        sig_table = Table(sig_box, colWidths=[2.8 * inch])
+        sig_table.setStyle(TableStyle([
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+        ]))
+        sig_elements.append(sig_table)
+
+    # Arrange signatures in a grid (2 per row)
+    sig_grid_data = []
+    for i in range(0, len(sig_elements), 2):
+        row = sig_elements[i:i+2]
+        if len(row) < 2:
+            row.append("")
+        sig_grid_data.append(row)
+    
+    sig_grid = Table(sig_grid_data, colWidths=[3.0 * inch, 3.0 * inch])
+    sig_grid.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    story.append(sig_grid)
+
+    doc.build(story)
+    return response
+
+
+@admin_required
 def match_detail(request, match_id):
     """
     Match detail view - shows full scoring breakdown and judge results.

@@ -40,6 +40,7 @@ from core.views.admin import (
     match_archive,
     match_restore,
     match_delete,
+    match_export_pdf,
     auto_matchmaking,
     auto_matchmaking_confirm,
     payment_list,
@@ -50,6 +51,7 @@ from core.views.admin import (
     payment_mark_completed,
     reports_view,
     reports_export,
+    match_monitor_export_pdf,
     trainee_export,
 )
 
