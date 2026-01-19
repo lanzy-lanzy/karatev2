@@ -64,6 +64,9 @@ class LeaderboardService:
         
         for rank, tp in enumerate(trainees_points, 1):
             try:
+                # Refresh trainee to get latest belt_rank from database
+                tp.trainee.refresh_from_db()
+                
                 Leaderboard.objects.update_or_create(
                     trainee=tp.trainee,
                     timeframe=timeframe,
